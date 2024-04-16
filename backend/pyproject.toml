@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 notion-client = "^2.2.1"
+flask = "^3.0.3"
 
 
 [build-system]
