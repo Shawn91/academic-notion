@@ -1,21 +1,27 @@
 import { bexBackground } from 'quasar/wrappers';
+import { ArxivScraper } from 'src/services/scrapers';
 
 /**
  * This function will be injected into active tab.
  * Therefore, it has access to 'document' and 'window' objects.
  */
 function InjectPopup() {
+  // 多次打开弹窗，只保留最新的一个
+  if (document.getElementById('academic-notion-popup')) {
+    document.body.removeChild(document.getElementById('academic-notion-popup') as HTMLIFrameElement);
+  }
   const popup = document.createElement('iframe');
   popup.src = chrome.runtime.getURL('www/index.html#popup');
-  popup.style.width = '60vw';
-  popup.style.height = '70vh';
-  popup.style.margin = 'auto';
+  const popupWidth = 70; // 页面宽度的百分比
+  const popupHeight = 70; // 页面可视高度的百分比
+  popup.style.width = `${popupWidth}vw`;
+  popup.style.height = `${popupHeight}vh`;
   popup.style.padding = '16px';
   popup.style.background = '#fff';
   popup.style.position = 'fixed';
-  popup.style.left = '20vw';
-  popup.style.top = '15vh';
-  popup.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+  popup.style.left = `${(100 - popupWidth) / 2}vw`;
+  popup.style.top = `${(100 - popupHeight) / 2}vh`;
+  popup.style.boxShadow = '0 0 32px rgba(0, 0, 0, 0.5)';
   popup.style.border = 'none';
   popup.style.zIndex = '9999';
   popup.id = 'academic-notion-popup';
@@ -23,27 +29,29 @@ function InjectPopup() {
   return popup;
 }
 
-// chrome.runtime.onInstalled.addListener(openExtension);
 chrome.action.onClicked.addListener((tab) => {
-  chrome.scripting.executeScript({
-    // @ts-ignore: 'tabId' raises an error warning in PyCharm while it actually works fine.
-    target: { tabId: tab.id },
-    func: InjectPopup,
-  });
+  chrome.scripting
+    .executeScript({
+      // @ts-ignore: 'tabId' raises an error warning in PyCharm while it actually works fine.
+      target: { tabId: tab.id },
+      func: InjectPopup,
+    })
+    .then(() => {
+      // tell the active tab that the popup has been opened
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id as number, { message: 'popup-open' });
+      });
+    });
 });
 
-declare module '@quasar/app-vite' {
-  interface BexEventMap {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    log: [{ message: string; data?: any[] }, never];
-    getTime: [never, number];
-
-    'storage.get': [{ key: string | null }, any];
-    'storage.set': [{ key: string; value: any }, any];
-    'storage.remove': [{ key: string }, any];
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.message == 'fetch-arxiv-works-info') {
+    ArxivScraper.fetchRawWorksInfo(request.data).then((res) => {
+      sendResponse({ data: res });
+    });
   }
-}
+  return true;
+});
 
 export default bexBackground((bridge /* , allActiveConnections */) => {
   bridge.on('log', ({ data, respond }) => {
@@ -85,26 +93,4 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
       respond();
     });
   });
-  // Usage:
-  // await bridge.send('storage.remove', { key: 'someKey' })
-
-  /*
-  // EXAMPLES
-  // Listen to a message from the client
-  bridge.on('test', d => {
-    console.log(d)
-  })
-
-  // Send a message to the client based on something happening.
-  chrome.tabs.onCreated.addListener(tab => {
-    bridge.send('browserTabCreated', { tab })
-  })
-
-  // Send a message to the client based on something happening.
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.url) {
-      bridge.send('browserTabUpdated', { tab, changeInfo })
-    }
-  })
-   */
 });
