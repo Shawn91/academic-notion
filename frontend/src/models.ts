@@ -85,11 +85,10 @@ export interface Work {
   title: string;
   subtitle?: string; // 副标题
   authors?: Author[];
-  updateDate?: string;
   abstract?: string;
   subjects?: string[]; // 所属领域。对应 arxiv 的 category 字段
   DOI?: string;
-  platform?: string; // 从哪个平台获取到的论文，如 arxiv
+  platform?: Platform; // 从哪个平台获取到的论文，如 arxiv
   platformId?: string;
   url?: string; // 详情页链接
   authorComments?: string[]; // 作者添加的注释，一般包含的内容：论文有多少页；相关数据可以在哪下载；等等

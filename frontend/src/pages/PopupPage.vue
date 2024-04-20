@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { Work } from 'src/models';
+import WorkTable from 'components/WorkTable.vue';
+import { ref } from 'vue';
+
+let works = ref<Work[]>([]);
 
 window.addEventListener('message', (event) => {
   if (event.data.message === 'works') {
-    const works: Work[] = event.data.data;
+    works.value = event.data.data;
   }
 });
 </script>
 
 <template>
-  <div>Nihc</div>
+  <work-table :works="works" :platform="works[0]?.['platform']"></work-table>
 </template>
 
 <style scoped></style>

@@ -13,7 +13,7 @@ function InjectPopup() {
   const popup = document.createElement('iframe');
   popup.src = chrome.runtime.getURL('www/index.html#popup');
   const popupWidth = 70; // 页面宽度的百分比
-  const popupHeight = 70; // 页面可视高度的百分比
+  const popupHeight = 80; // 页面可视高度的百分比
   popup.style.width = `${popupWidth}vw`;
   popup.style.height = `${popupHeight}vh`;
   popup.style.padding = '16px';

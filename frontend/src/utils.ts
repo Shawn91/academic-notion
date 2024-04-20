@@ -26,6 +26,7 @@ function isNullOrUndefined(value: unknown): boolean {
  * 当 key 只在 obj1 或 obj2 中才有时，最终结果要包含这个值
  */
 export function mergeObjects<T extends object, U extends object>(obj1: T, obj2: U): T & U {
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
   const result: any = {};
 
   // 获取两个对象所有的键
