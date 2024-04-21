@@ -1,3 +1,4 @@
+<!-- This is a popup page that runs inside an iframe. -->
 <script setup lang="ts">
 import { Work } from 'src/models';
 import WorkTable from 'components/WorkTable.vue';
@@ -10,10 +11,23 @@ window.addEventListener('message', (event) => {
     works.value = event.data.data;
   }
 });
+
+function handleWorkTableMessage(message: string) {
+  if (message === 'close-popup') {
+    window.parent.postMessage({ message: 'close-popup' }, '*');
+  }
+}
 </script>
 
 <template>
-  <work-table :works="works" :platform="works[0]?.['platform']"></work-table>
+  <div style="height: 100vh">
+    <work-table
+      v-if="works.length > 0"
+      :works="works"
+      :platform="works[0]?.['platform']"
+      @close-popup="handleWorkTableMessage('close-popup')"
+    ></work-table>
+  </div>
 </template>
 
 <style scoped></style>

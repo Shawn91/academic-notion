@@ -20,6 +20,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   return true;
 });
 
+window.addEventListener('message', function (event) {
+  if (event.data.message === 'close-popup') {
+    document.getElementById('academic-notion-popup')?.remove();
+  }
+});
+
 export default bexContent((/* bridge */) => {
   // Hook into the bridge to listen for events sent from the client BEX.
   /*

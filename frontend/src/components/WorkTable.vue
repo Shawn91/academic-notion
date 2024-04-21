@@ -32,24 +32,46 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const emit = defineEmits(['close-popup']);
 
 const selectedWorks = ref<Work[]>([]);
 </script>
 
 <template>
-  <div id="work-table">
-    <q-table
-      :rows="props.works"
-      :columns="COLUMNS"
-      row-key="title"
-      selection="multiple"
-      v-model:selected="selectedWorks"
-      :rows-per-page-options="[0]"
-      bordered
-      wrap-cells
-      separator="cell"
-    ></q-table>
+  <div id="work-table-container">
+    <div id="work-table">
+      <q-table
+        :rows="props.works"
+        :columns="COLUMNS"
+        row-key="title"
+        selection="multiple"
+        v-model:selected="selectedWorks"
+        :rows-per-page-options="[0]"
+        bordered
+        wrap-cells
+        separator="cell"
+      ></q-table>
+    </div>
+    <div id="work-table-footer" class="flex justify-end q-mt-lg q-mb-sm">
+      <q-btn color="white" text-color="black" label="Cancel" class="q-ml-lg" @click="emit('close-popup')" />
+      <q-btn color="primary" label="Upload" />
+    </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+#work-table-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#work-table {
+  flex: 1;
+  overflow-y: auto;
+}
+
+#work-table-footer {
+  flex-shrink: 0;
+}
+</style>
