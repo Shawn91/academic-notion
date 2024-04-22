@@ -53,8 +53,8 @@ const selectedWorks = ref<Work[]>([]);
       ></q-table>
     </div>
     <div id="work-table-footer" class="flex justify-end q-mt-lg q-mb-sm">
-      <q-btn color="white" text-color="black" label="Cancel" class="q-ml-lg" @click="emit('close-popup')" />
-      <q-btn color="primary" label="Upload" />
+      <q-btn color="white" text-color="black" label="Cancel" @click="emit('close-popup')" />
+      <q-btn color="primary" class="q-ml-lg" label="Upload" />
     </div>
   </div>
 </template>

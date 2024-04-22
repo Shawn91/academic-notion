@@ -263,3 +263,13 @@ export const ARXIV_SUBJECTS = {
   'stat.OT': 'Other Statistics',
   'stat.TH': 'Statistics Theory',
 };
+
+/**
+ * Notion 的一个 page 或 database 的基本信息
+ */
+export interface NotionPDInfo {
+  id: string;
+  title: string;
+  url: string;
+  object: 'page' | 'database';
+}

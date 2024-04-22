@@ -1,5 +1,6 @@
 import { bexBackground } from 'quasar/wrappers';
 import { ArxivScraper } from 'src/services/scrapers';
+import { searchPageDatabaseByTitle } from 'src/services/api';
 
 /**
  * This function will be injected into active tab.
@@ -16,7 +17,6 @@ function InjectPopup() {
   const popupHeight = 80; // 页面可视高度的百分比
   popup.style.width = `${popupWidth}vw`;
   popup.style.height = `${popupHeight}vh`;
-  popup.style.padding = '16px';
   popup.style.background = '#fff';
   popup.style.position = 'fixed';
   popup.style.left = `${(100 - popupWidth) / 2}vw`;
@@ -48,6 +48,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message == 'fetch-arxiv-works-info') {
     ArxivScraper.fetchRawWorksInfo(request.data).then((res) => {
       sendResponse({ data: res });
+    });
+  } else if (request.message == 'fetch-pages-databases-by-title') {
+    searchPageDatabaseByTitle(request.data.query).then((res) => {
+      sendResponse(res);
     });
   }
   return true;

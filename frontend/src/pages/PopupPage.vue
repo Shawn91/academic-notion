@@ -1,10 +1,12 @@
 <!-- This is a popup page that runs inside an iframe. -->
 <script setup lang="ts">
-import { Work } from 'src/models';
+import { NotionPDInfo, Work } from 'src/models';
 import WorkTable from 'components/WorkTable.vue';
+import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 import { ref } from 'vue';
 
-let works = ref<Work[]>([]);
+const works = ref<Work[]>([]); // 当前网页中提取的文献信息
+const pageDatabaseObjs = ref<NotionPDInfo[]>([]); // 当前网页中提取的文献信息
 
 window.addEventListener('message', (event) => {
   if (event.data.message === 'works') {
@@ -20,13 +22,16 @@ function handleWorkTableMessage(message: string) {
 </script>
 
 <template>
-  <div style="height: 100vh">
-    <work-table
-      v-if="works.length > 0"
-      :works="works"
-      :platform="works[0]?.['platform']"
-      @close-popup="handleWorkTableMessage('close-popup')"
-    ></work-table>
+  <div class="q-pa-md flex column justify-between" style="height: 100vh">
+    <search-page-database :page-database-objs="pageDatabaseObjs"></search-page-database>
+    <div style="height: 80%">
+      <work-table
+        v-if="works.length > 0"
+        :works="works"
+        :platform="works[0]?.['platform']"
+        @close-popup="handleWorkTableMessage('close-popup')"
+      ></work-table>
+    </div>
   </div>
 </template>
 
