@@ -1,5 +1,6 @@
 import { ARXIV_SUBJECTS, Platform, Work, WorkType } from 'src/models';
 import { CrossrefClient } from '@jamesgopsill/crossref-client';
+import wretch from 'wretch';
 import { extractDateNumsFromStr, mergeObjects } from 'src/utils';
 
 const crossrefClient = new CrossrefClient();
@@ -118,10 +119,9 @@ export class ArxivScraper {
    * @returns {Promise<string>} xml 格式的字符串
    */
   static async fetchRawWorksInfo(ids: string[]): Promise<string> {
-    const res = await fetch(`http://export.arxiv.org/api/query?max_results=${ids.length}&id_list=${ids.join(',')}`, {
-      method: 'GET',
-    });
-    return await res.text();
+    return await wretch(`http://export.arxiv.org/api/query?max_results=${ids.length}&id_list=${ids.join(',')}`)
+      .get()
+      .text();
   }
 
   /**
