@@ -50,6 +50,7 @@ function handleSelection() {
       <q-table
         :rows="props.works"
         :columns="COLUMNS"
+        title="Select Papers to Upload"
         row-key="title"
         selection="multiple"
         v-model:selected="selectedWorks"
