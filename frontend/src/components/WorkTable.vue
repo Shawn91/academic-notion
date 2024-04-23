@@ -32,7 +32,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits(['close-popup']);
 
 const selectedWorks = ref<Work[]>([]);
 </script>
@@ -52,26 +51,7 @@ const selectedWorks = ref<Work[]>([]);
         separator="cell"
       ></q-table>
     </div>
-    <div id="work-table-footer" class="flex justify-end q-mt-lg q-mb-sm">
-      <q-btn color="white" text-color="black" label="Cancel" @click="emit('close-popup')" />
-      <q-btn color="primary" class="q-ml-lg" label="Upload" />
-    </div>
   </div>
 </template>
 
-<style scoped>
-#work-table-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-#work-table {
-  flex: 1;
-  overflow-y: auto;
-}
-
-#work-table-footer {
-  flex-shrink: 0;
-}
-</style>
+<style scoped></style>
