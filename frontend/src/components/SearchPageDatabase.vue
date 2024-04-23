@@ -23,6 +23,7 @@ let titleQuery = ''; // 用于搜索的关键字
 
 const pageDatabaseOptions = ref(props.pageDatabaseObjs);
 const filteredPageDatabaseOptions = ref(props.pageDatabaseObjs);
+const emit = defineEmits(['page-database-selected']);
 
 function filterByTitle(val: string, update: (arg0: () => void) => void) {
   update(() => {
@@ -52,6 +53,13 @@ function searchByTitle() {
     }
   );
 }
+
+/**
+ * 每当用户选择一个 pages 或 databases 时，调用此函数，通知父组件
+ */
+function handleSelection() {
+  emit('page-database-selected', selectedPageDatabase.value);
+}
 </script>
 
 <template>
@@ -68,6 +76,7 @@ function searchByTitle() {
       use-chips
       @filter="filterByTitle"
       label="Search for a database to upload to"
+      @update:model-value="handleSelection"
     >
       <template v-slot:prepend>
         <q-icon name="mdi-database-search-outline" />

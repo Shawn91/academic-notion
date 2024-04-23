@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Platform, Work } from 'src/models';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 
 const COLUMNS = [
   {
@@ -32,8 +32,16 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const emit = defineEmits(['works-selected']);
 
 const selectedWorks = ref<Work[]>([]);
+
+function handleSelection() {
+  // 如果不使用 nextTick，会在 selectedWorks 还没更新时就 emit，导致 emit 的是上一个状态的值
+  nextTick(() => {
+    emit('works-selected', selectedWorks.value);
+  });
+}
 </script>
 
 <template>
@@ -49,6 +57,7 @@ const selectedWorks = ref<Work[]>([]);
         bordered
         wrap-cells
         separator="cell"
+        @selection="handleSelection"
       ></q-table>
     </div>
   </div>
