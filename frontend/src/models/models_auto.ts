@@ -55,23 +55,60 @@ export interface components {
       strikethrough: boolean;
       underline: boolean;
       code: boolean;
-      color: string;
+      /** @enum {string} */
+      color: "blue" | "blue_background" | "brown" | "brown_background" | "default" | "gray" | "gray_background" | "green" | "green_background" | "orange" | "orange_background" | "pink" | "pink_background" | "purple" | "purple_background" | "red" | "red_background" | "yellow" | "yellow_background";
     };
+    /** @description one of the three types of rich text */
     NTextLink: {
       content?: string;
+      /** @description inline link */
       link?: string | null;
     };
-    /** @description Page 或 Database 的 title */
-    NTitle: {
+    /** @description one of the three types of rich text */
+    NMention: {
+      /** @enum {string} */
+      type?: "database" | "date" | "link_preview" | "page" | "template_mention" | "user";
+      database?: {
+        id?: string;
+      };
+      data?: {
+        start?: string;
+        end?: string | null;
+      };
+      link_preview?: {
+        url?: string;
+      };
+      page?: {
+        id?: string;
+      };
+      template_mention?: {
+        /** @enum {string} */
+        type?: "template_mention_date" | "template_mention_user";
+        /** @enum {string} */
+        template_mention_date?: "today" | "now";
+        /** @enum {string} */
+        template_mention_user?: "me";
+      };
+      user?: {
+        id?: string;
+        /** @enum {string} */
+        object?: "user";
+      };
+    };
+    /** @description one of the three types of rich text */
+    NEquation: {
+      expression: string;
+    };
+    /** @description Page 或 Database 的 title 也是 RichText */
+    NRichText: {
       annotations: components["schemas"]["NAnnotations"];
       href?: string | null;
       plain_text: string;
-      text: components["schemas"]["NTextLink"];
-      /**
-       * @description 这里只列举了目前已知值
-       * @enum {string}
-       */
-      type: "text";
+      text?: components["schemas"]["NTextLink"];
+      mention?: components["schemas"]["NMention"];
+      equation?: components["schemas"]["NEquation"];
+      /** @enum {string} */
+      type: "text" | "mention" | "equation";
     };
     /** @description 一个 page 或 database 的 schema 信息 */
     NPDInfo: {
@@ -97,8 +134,8 @@ export interface components {
       /** @description 应该是只有 database 才有 */
       is_inline: boolean;
       public_url?: string | null;
-      /** @description page 或 database 的 title。尚不清楚为何返回的是一个 list */
-      title: components["schemas"]["NTitle"][];
+      /** @description database 的 title。尚不清楚为何返回的是一个 list */
+      title: components["schemas"]["NRichText"][];
       url?: string | null;
     };
     /**

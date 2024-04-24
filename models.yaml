@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Notion API models and custom models
   version: "1.0"
-paths: {}
+paths: { }
 components:
   schemas:
     NCreateEditBy:
@@ -11,7 +11,7 @@ components:
       properties:
         type:
           type: string
-          enum: [user]
+          enum: [ user ]
         id:
           type: string
       required:
@@ -24,7 +24,7 @@ components:
       properties:
         type:
           type: string
-          enum: [external]
+          enum: [ external ]
         external:
           type: object
       required:
@@ -37,7 +37,7 @@ components:
       properties:
         type:
           type: string
-          enum: [emoji]
+          enum: [ emoji ]
         emoji:
           type: string
       required:
@@ -49,7 +49,7 @@ components:
       properties:
         type:
           type: string
-          enum: [workspace, page_id, database_id]
+          enum: [ workspace, page_id, database_id ]
           description: 这里只列举了目前已知值
         workspace:
           type: boolean
@@ -96,6 +96,7 @@ components:
           type: boolean
         color:
           type: string
+          enum: [ blue, blue_background, brown, brown_background, default, gray, gray_background, green, green_background, orange, orange_background, pink, pink_background, purple, purple_background, red, red_background, yellow, yellow_background ]
       required:
         - bold
         - italic
@@ -106,15 +107,77 @@ components:
 
     NTextLink:
       type: object
+      description: one of the three types of rich text
       properties:
         content:
           type: string
         link:
           type: string
           nullable: true
+          description: inline link
 
-    NTitle:
-      description: Page 或 Database 的 title
+    NMention:
+      type: object
+      description: one of the three types of rich text
+      properties:
+        type:
+          type: string
+          enum: [ database, date, link_preview, page, template_mention, user ]
+        database:
+          type: object
+          properties:
+            id:
+              type: string
+        data:
+          type: object
+          properties:
+            start:
+              type: string
+            end:
+              type: string
+              nullable: true
+        link_preview:
+          type: object
+          properties:
+            url:
+              type: string
+        page:
+          type: object
+          properties:
+            id:
+              type: string
+        template_mention:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [ template_mention_date, template_mention_user ]
+            template_mention_date:
+              type: string
+              enum: [ today, now ]
+            template_mention_user:
+              type: string
+              enum: [ me ]
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            object:
+              type: string
+              enum: [ user ]
+
+    NEquation:
+      type: object
+      description: one of the three types of rich text
+      properties:
+        expression:
+          type: string
+      required:
+        - expression
+
+    NRichText:
+      description: Page 或 Database 的 title 也是 RichText
       type: object
       properties:
         annotations:
@@ -126,14 +189,16 @@ components:
           type: string
         text:
           $ref: '#/components/schemas/NTextLink'
+        mention:
+          $ref: '#/components/schemas/NMention'
+        equation:
+          $ref: '#/components/schemas/NEquation'
         type:
           type: string
-          enum: [text]
-          description: 这里只列举了目前已知值
+          enum: [ text, mention, equation ]
       required:
         - annotations
         - plain_text
-        - text
         - type
 
     NPDInfo:
@@ -145,7 +210,7 @@ components:
           description: page 或 database 的 id
         object:
           type: string
-          enum: [page, database]
+          enum: [ page, database ]
         created_time:
           type: string
         last_edited_time:
@@ -182,9 +247,9 @@ components:
           nullable: true
         title:
           type: array
-          description:  page 或 database 的 title。尚不清楚为何返回的是一个 list
+          description: database 的 title。尚不清楚为何返回的是一个 list
           items:
-            $ref: '#/components/schemas/NTitle'
+            $ref: '#/components/schemas/NRichText'
         url:
           type: string
           nullable: true
