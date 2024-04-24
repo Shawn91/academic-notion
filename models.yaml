@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: Notion API models and custom models
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    NCreateEditBy:
+      type: object
+      description: 由谁创建或修改
+      properties:
+        type:
+          type: string
+          enum: [user]
+        id:
+          type: string
+      required:
+        - type
+        - id
+
+    NCover:
+      type: object
+      description: 封面图
+      properties:
+        type:
+          type: string
+          enum: [external]
+        external:
+          type: object
+      required:
+        - type
+        - external
+
+    NIcon:
+      type: object
+      description: 图标
+      properties:
+        type:
+          type: string
+          enum: [emoji]
+        emoji:
+          type: string
+      required:
+        - type
+        - emoji
+
+    NParent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [workspace, page_id, database_id]
+          description: 这里只列举了目前已知值
+        workspace:
+          type: boolean
+        database_id:
+          type: string
+        page_id:
+          type: string
+          description: 如果 parent 是 page，那么这里就是 page 的 id
+      required:
+        - type
+
+    NProperty:
+      type: object
+      description: 属性（即每个表格的每一列信息）
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          description: 表示这一列是文本、日期、多选等
+        name:
+          type: string
+          description: 这一列展示出来的列名
+        rich_text:
+          type: object
+      required:
+        - id
+        - type
+        - name
+
+    NAnnotations:
+      description: 文本样式注解。目前已知的应用场景是 Page 或 Database 的 title 的样式
+      type: object
+      properties:
+        bold:
+          type: boolean
+        italic:
+          type: boolean
+        strikethrough:
+          type: boolean
+        underline:
+          type: boolean
+        code:
+          type: boolean
+        color:
+          type: string
+      required:
+        - bold
+        - italic
+        - strikethrough
+        - underline
+        - code
+        - color
+
+    NTextLink:
+      type: object
+      properties:
+        content:
+          type: string
+        link:
+          type: string
+          nullable: true
+
+    NTitle:
+      description: Page 或 Database 的 title
+      type: object
+      properties:
+        annotations:
+          $ref: '#/components/schemas/NAnnotations'
+        href:
+          type: string
+          nullable: true
+        plain_text:
+          type: string
+        text:
+          $ref: '#/components/schemas/NTextLink'
+        type:
+          type: string
+          enum: [text]
+          description: 这里只列举了目前已知值
+      required:
+        - annotations
+        - plain_text
+        - text
+        - type
+
+    NPDInfo:
+      description: 一个 page 或 database 的 schema 信息
+      type: object
+      properties:
+        id:
+          type: string
+          description: page 或 database 的 id
+        object:
+          type: string
+          enum: [page, database]
+        created_time:
+          type: string
+        last_edited_time:
+          type: string
+        created_by:
+          $ref: '#/components/schemas/NCreateEditBy'
+        last_edited_by:
+          $ref: '#/components/schemas/NCreateEditBy'
+        cover:
+          $ref: '#/components/schemas/NCover'
+        icon:
+          $ref: '#/components/schemas/NIcon'
+        parent:
+          $ref: '#/components/schemas/NParent'
+        archived:
+          type: boolean
+        in_trash:
+          type: boolean
+        properties:
+          type: object
+          description: 一个 dict，key 是展示出来的列名（即 Property.name），value 是 Property
+          additionalProperties:
+            $ref: '#/components/schemas/NProperty'
+        description:
+          type: array
+          description: 内容尚不详
+          items:
+            type: object
+        is_inline:
+          description: 应该是只有 database 才有
+          type: boolean
+        public_url:
+          type: string
+          nullable: true
+        title:
+          type: array
+          description:  page 或 database 的 title。尚不清楚为何返回的是一个 list
+          items:
+            $ref: '#/components/schemas/NTitle'
+        url:
+          type: string
+          nullable: true
+      required:
+        - id
+        - object
+        - created_time
+        - last_edited_time
+        - created_by
+        - last_edited_by
+        - parent
+        - archived
+        - in_trash
+        - properties
+        - description
+        - is_inline
+        - title
+
+    WorkType:
+      type: string
+      description: 是书、会议论文、期刊论文、还是别的类型。主要内容来自 crossref.org 的论文类型，https://api.crossref.org/v1/types。
+      enum:
+        - book-section
+        - monograph
+        - report-component
+        - report
+        - peer-review
+        - book-track
+        - journal-article
+        - book-part
+        - other
+        - book
+        - journal-volume
+        - book-set
+        - reference-entry
+        - proceedings-article
+        - journal
+        - component
+        - book-chapter
+        - proceedings-series
+        - report-series
+        - proceedings
+        - database
+        - standard
+        - reference-book
+        - posted-content
+        - journal-issue
+        - dissertation
+        - grant
+        - dataset
+        - book-series
+        - edited-book
+
+    PublishInfo:
+      type: object
+      description: 内容主要来自 crossref.org 的 DOI 数据。出版日期取自其 issued 字段
+      properties:
+        publisher:
+          type: string
+        containerTitle:
+          type: string
+        issue:
+          type: string
+        volume:
+          type: string
+        pages:
+          type: string
+        year:
+          type: integer
+        month:
+          type: integer
+        day:
+          type: integer
+
+    Author:
+      type: object
+      properties:
+        familyName:
+          type: string
+        givenName:
+          type: string
+        fullName:
+          type: string
+        ORCID:
+          type: string
+          description: Researcher's ID, can be found at https://orcid.org
+
+    DigitalResource:
+      description: 原始内容下载链接
+      type: object
+      properties:
+        url:
+          type: string
+          description: 原始内容的下载链接
+          format: uri
+        contentType:
+          type: string
+          description: 原始内容的 mime 类型
+
+    ClinicalTrial:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 临床试验的 id 号
+        registry:
+          type: string
+          description: 临床试验的注册机构的 DOI
+
+    Platform:
+      type: string
+      description: 从哪个平台获取到的文献。不是该文献的来源，而是从哪个平台获取到的
+      enum:
+        - arXiv
+
+    Work:
+      type: object
+      properties:
+        title:
+          type: string
+        subtitle:
+          type: string
+          description: 副标题
+        authors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Author'
+        abstract:
+          type: string
+        subjects:
+          type: array
+          description: 所属领域。对应 arxiv 的 category 字段
+          items:
+            type: string
+        DOI:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
+        platformId:
+          type: string
+        url:
+          type: string
+          format: uri
+          description: 详情页链接
+        authorComments:
+          type: array
+          description: 作者添加的注释，一般包含的内容：论文有多少页；相关数据可以在哪下载；等等
+          items:
+            type: string
+        publishInfo:
+          $ref: '#/components/schemas/PublishInfo'
+        referencedByCount:
+          type: integer
+          description: 被引用次数
+        type:
+          $ref: '#/components/schemas/WorkType'
+        ISBN:
+          type: array
+          items:
+            type: string
+        digitalResources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DigitalResource'
+        clinicalTrial:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicalTrial'
+        references:
+          type: array
+          description: 参考文献
+          items:
+            $ref: '#/components/schemas/Work'

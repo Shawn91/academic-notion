@@ -1,4 +1,4 @@
-import { ARXIV_SUBJECTS, Platform, Work, WorkType } from 'src/models';
+import { ARXIV_SUBJECTS, Platform, Work, WorkType } from 'src/models/models';
 import { CrossrefClient } from '@jamesgopsill/crossref-client';
 import wretch from 'wretch';
 import { extractDateNumsFromStr, mergeObjects } from 'src/utils';

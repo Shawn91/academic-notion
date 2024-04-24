@@ -11,7 +11,11 @@ notion-client = "^2.2.1"
 flask = "^3.0.3"
 flask-cors = "^4.0.0"
 python-dotenv = "^1.0.1"
+typing-extensions = "^4.11.0"
 
+
+[tool.poetry.group.dev.dependencies]
+datamodel-code-generator = "^0.25.5"
 
 [build-system]
 requires = ["poetry-core"]

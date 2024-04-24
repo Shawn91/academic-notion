@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Platform, Work } from 'src/models';
+import { Platform, Work } from 'src/models/models';
 import { nextTick, ref } from 'vue';
 
 const COLUMNS = [

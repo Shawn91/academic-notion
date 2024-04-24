@@ -1,14 +1,14 @@
 <!-- This is a popup page that runs inside an iframe. -->
 <script setup lang="ts">
-import { NotionPDInfo, Work } from 'src/models';
+import { NPDInfo, Work } from 'src/models/models';
 import WorkTable from 'components/WorkTable.vue';
 import { ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
-const pageDatabaseObjs = ref<NotionPDInfo[]>([]); // 当前网页中提取的文献信息
+const pageDatabaseObjs = ref<NPDInfo[]>([]); // 当前网页中提取的文献信息
 let selectedWorks: Work[] = []; // 选中的文献
-let selectedPD: NotionPDInfo | null = null;
+let selectedPD: NPDInfo | null = null;
 let page = ref('page-1');
 
 window.addEventListener('message', (event) => {

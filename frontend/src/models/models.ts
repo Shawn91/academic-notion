@@ -2,104 +2,15 @@
 // json api 的全部字段内容见 https://api.crossref.org/swagger-ui/index.html#/Types/get_types
 // 字段含义见 https://github.com/CrossRef/rest-api-doc/blob/master/api_format.md
 // xml api 有字段解释，https://data.crossref.org/reports/help/schema_doc/5.3.1/index.html，但是与 json api 并非完美对应
+import { components } from './models_auto';
 
-/**
- * 是书、会议论文、期刊论文、还是别的类型
- * 主要内容来自 crossref.org 的论文类型，https://api.crossref.org/v1/types。
- */
-export enum WorkType {
-  BOOK_SECTION = 'book-section',
-  MONOGRAPH = 'monograph',
-  REPORT_COMPONENT = 'report-component',
-  REPORT = 'report',
-  PEER_REVIEW = 'peer-review',
-  BOOK_TRACK = 'book-track',
-  JOURNAL_ARTICLE = 'journal-article',
-  BOOK_PART = 'book-part',
-  OTHER = 'other',
-  BOOK = 'book',
-  JOURNAL_VOLUME = 'journal-volume',
-  BOOK_SET = 'book-set',
-  REFERENCE_ENTRY = 'reference-entry',
-  PROCEEDINGS_ARTICLE = 'proceedings-article',
-  JOURNAL = 'journal',
-  COMPONENT = 'component',
-  BOOK_CHAPTER = 'book-chapter',
-  PROCEEDINGS_SERIES = 'proceedings-series',
-  REPORT_SERIES = 'report-series',
-  PROCEEDINGS = 'proceedings',
-  DATABASE = 'database',
-  STANDARD = 'standard',
-  REFERENCE_BOOK = 'reference-book',
-  POSTED_CONTENT = 'posted-content',
-  JOURNAL_ISSUE = 'journal-issue',
-  DISSERTATION = 'dissertation',
-  GRANT = 'grant',
-  DATASET = 'dataset',
-  BOOK_SERIES = 'book-series',
-  EDITED_BOOK = 'edited-book',
-}
-
-/**
- * 对于来自 crossref.org 的 DOI 数据。出版日期取自 issued 字段
- */
-export interface PublishInfo {
-  publisher?: string; // 出版商
-  containerTitle?: string; // 期刊名、书名等
-  issue?: string; // 第几期
-  volume?: string; // 第几卷
-  pages?: string; // 第几页
-  year?: number; // 出版年份
-  month?: number; // 出版月份
-  day?: number; // 出版日
-}
-
-export interface Author {
-  familyName: string;
-  givenName?: string;
-  fullName?: string;
-  ORCID?: string; // 研究者对应的 id。https://orcid.org 上可以查找
-}
-
-/**
- * 原始内容下载链接
- */
-export interface DigitalResource {
-  url: string; // 下载链接
-  contentType?: string; // 原始内容的 mime 类型
-}
-
-export interface ClinicalTrial {
-  id: string; // 临床试验的 id 号
-  registry: string; // 临床试验的注册机构的 DOI
-}
-
-/**
- * 从哪个平台获取到的文献。不是该文献的来源，而是从哪个平台获取到的
- */
-export enum Platform {
-  ARXIV = 'arXiv',
-}
-
-export interface Work {
-  title: string;
-  subtitle?: string; // 副标题
-  authors?: Author[];
-  abstract?: string;
-  subjects?: string[]; // 所属领域。对应 arxiv 的 category 字段
-  DOI?: string;
-  platform?: Platform; // 从哪个平台获取到的论文，如 arxiv
-  platformId?: string;
-  url?: string; // 详情页链接
-  authorComments?: string[]; // 作者添加的注释，一般包含的内容：论文有多少页；相关数据可以在哪下载；等等
-  publishInfo?: PublishInfo;
-  referencedByCount?: number; // 被引用次数
-  type?: WorkType;
-  ISBN?: string[]; // ISBN 号
-  digitalResources?: DigitalResource[];
-  clinicalTrial?: ClinicalTrial[];
-  references?: Work[]; // 参考文献
-}
+export type NPDInfo = components['schemas']['NPDInfo'];
+export type NProperty = components['schemas']['NProperty'];
+export type WorkType = components['schemas']['WorkType'];
+export type PublishInfo = components['schemas']['PublishInfo'];
+export type Author = components['schemas']['Author'];
+export type Work = components['schemas']['Work'];
+export type Platform = components['schemas']['Platform'];
 
 /**
  * arxiv 网站对文献的主题分类
@@ -263,13 +174,3 @@ export const ARXIV_SUBJECTS = {
   'stat.OT': 'Other Statistics',
   'stat.TH': 'Statistics Theory',
 };
-
-/**
- * Notion 的一个 page 或 database 的基本信息
- */
-export interface NotionPDInfo {
-  id: string;
-  title: string;
-  url: string;
-  object: 'page' | 'database';
-}

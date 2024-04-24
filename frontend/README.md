@@ -13,3 +13,16 @@
 3. 插入 popup 后，background script 发送一个 popup-open 消息给 content script
 4. content script获取当前页面所有论文的 id，传送给 background script
 5. background script 接收到所有 ids 后，调用 arxiv api，获取所有论文的信息，再传递给 popup 用于展示
+# 2. 数据模型
+在项目根目录下有个 models.yaml 文件，它是使用 OpenAPI 格式定义了所有数据模型。
+
+可以通过工具，自动根据 models.yaml 生成对应的 typescript 和 python 的 models 文件，以实现类型标注
+
+```shell
+# python. 假设命令行在 backend 文件夹
+datamodel-codegen --input ../models.yaml --output src/models_auto.py --output-model-type typing.TypedDict --input-file-type openapi
+
+# typescript. 假设命令行在 frontend 文件夹
+npx openapi-typescript ../models.yaml -o src/models/models_auto.ts
+```
+typescript 导入自动生成的 models 稍微麻烦一点，参考 https://github.com/koxudaxi/datamodel-code-generator

@@ -8,16 +8,16 @@
 -->
 <script setup lang="ts">
 import { ref } from 'vue';
-import { NotionPDInfo } from 'src/models';
+import { NPDInfo } from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
 
 interface Props {
-  pageDatabaseObjs: NotionPDInfo[];
+  pageDatabaseObjs: NPDInfo[];
 }
 
 const props = defineProps<Props>();
-const selectedPageDatabase = ref<NotionPDInfo | null>(null);
+const selectedPageDatabase = ref<NPDInfo | null>(null);
 const qSelectComponent = ref<QSelect | null>(null);
 let titleQuery = ''; // 用于搜索的关键字
 
