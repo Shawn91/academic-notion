@@ -9,17 +9,6 @@ const crossrefClient = new CrossrefClient();
  * 给定 DOI，从 crossref.org 的 api 中获取论文信息
  */
 export class DOIScraper {
-  /**
-   * 将字符串形式的文献类型，转换为 WorkType enum。如 journal-article 转换为 WorkType.JOURNAL_ARTICLE
-   * @param value
-   */
-  static strToWorkType(value: string): WorkType | undefined {
-    if (value in WorkType) {
-      return WorkType[value as keyof typeof WorkType];
-    }
-    return undefined;
-  }
-
   static async fetchWorkByDOI(doi: string): Promise<Work | null> {
     const res = await crossrefClient.work(doi);
     if (!(res.ok && res.status == 200)) return null;
@@ -30,7 +19,7 @@ export class DOIScraper {
       referencedByCount: resJson.isReferencedByCount,
       DOI: resJson.DOI,
       url: resJson.URL, // 这个地址实际上是 crossref 提供的 DOI 链接，点击后会自动跳转到实际的文献页面
-      type: this.strToWorkType(resJson.type),
+      type: resJson.type as WorkType,
       subtitle: resJson.subtitle?.at(0),
       subjects: resJson.subject,
       ISBN: resJson.ISBN,
@@ -214,7 +203,7 @@ export class ArxivScraper {
 
       return {
         title: workEle.getElementsByTagName('title')?.[0].textContent,
-        platform: Platform.ARXIV,
+        platform: 'arXiv',
         platformId: workEle.getElementsByTagName('id')?.[0].textContent,
         publishInfo: publishInfo,
         abstract: workEle.getElementsByTagName('summary')?.[0].textContent,
