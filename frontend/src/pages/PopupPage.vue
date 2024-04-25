@@ -28,13 +28,6 @@ function handleWorksSelected(data: Work[]) {
   selectedWorks = data;
 }
 
-/**
- * 用户选择了一个 page 或 database 时触发
- */
-function handlePDSelected(data: NotionPDInfo) {
-  selectedPD = data;
-}
-
 function uploadWorks() {
   chrome.runtime.sendMessage(
     {
@@ -65,15 +58,14 @@ function uploadWorks() {
       </div>
     </div>
   </div>
-  <div class="page-container q-pa-md flex column justify-between" v-show="page === 'page-2'">
-    <search-page-database
-      :page-database-objs="pageDatabaseObjs"
-      @page-database-selected="handlePDSelected"
-    ></search-page-database>
+  <div class="page-container q-pa-md flex column justify-between no-wrap" v-show="page === 'page-2'">
+    <div style="max-width: 800px; width: 100%; align-self: center">
+      <search-page-database :page-database-objs="pageDatabaseObjs"></search-page-database>
+    </div>
     <div class="footer-button-group flex justify-end q-mt-sm">
       <q-btn color="primary" label="Upload" @click="uploadWorks" />
       <q-btn color="white" class="q-ml-md" text-color="black" label="Cancel" @click="closePopup()" />
-      <q-btn color="secondary" class="q-ml-md" label="Previous" @click="page = 'page-1'" />
+      <q-btn color="secondary" class="q-ml-md" label="Back" @click="page = 'page-1'" />
     </div>
   </div>
 </template>
@@ -88,9 +80,5 @@ function uploadWorks() {
 #work-table-container {
   flex: 1;
   overflow-y: auto;
-}
-
-#footer-button-group {
-  flex-shrink: 0;
 }
 </style>
