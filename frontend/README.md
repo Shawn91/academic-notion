@@ -26,3 +26,5 @@ datamodel-codegen --input ../models.yaml --output src/models_auto.py --output-mo
 npx openapi-typescript ../models.yaml -o src/models/models_auto.ts
 ```
 typescript 导入自动生成的 models 稍微麻烦一点，参考 https://github.com/koxudaxi/datamodel-code-generator
+
+另外，typescript 无法强制覆盖已经存在的 models_auto.ts，需要手动删除原有的文件，再生成新的

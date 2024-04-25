@@ -11,6 +11,7 @@ export type PublishInfo = components['schemas']['PublishInfo'];
 export type Author = components['schemas']['Author'];
 export type Work = components['schemas']['Work'];
 export type Platform = components['schemas']['Platform'];
+export type DigitalResource = components['schemas']['DigitalResource'];
 
 /**
  * arxiv 网站对文献的主题分类

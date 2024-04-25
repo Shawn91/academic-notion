@@ -10,22 +10,22 @@ from typing_extensions import Literal, NotRequired, TypedDict
 
 
 class NCreateEditBy(TypedDict):
-    type: Literal['user']
+    type: Literal["user"]
     id: str
 
 
 class NCover(TypedDict):
-    type: Literal['external']
+    type: Literal["external"]
     external: Dict[str, Any]
 
 
 class NIcon(TypedDict):
-    type: Literal['emoji']
+    type: Literal["emoji"]
     emoji: str
 
 
 class NParent(TypedDict):
-    type: Literal['workspace', 'page_id', 'database_id']
+    type: Literal["workspace", "page_id", "database_id"]
     workspace: NotRequired[bool]
     database_id: NotRequired[str]
     page_id: NotRequired[str]
@@ -45,25 +45,25 @@ class NAnnotations(TypedDict):
     underline: bool
     code: bool
     color: Literal[
-        'blue',
-        'blue_background',
-        'brown',
-        'brown_background',
-        'default',
-        'gray',
-        'gray_background',
-        'green',
-        'green_background',
-        'orange',
-        'orange_background',
-        'pink',
-        'pink_background',
-        'purple',
-        'purple_background',
-        'red',
-        'red_background',
-        'yellow',
-        'yellow_background',
+        "blue",
+        "blue_background",
+        "brown",
+        "brown_background",
+        "default",
+        "gray",
+        "gray_background",
+        "green",
+        "green_background",
+        "orange",
+        "orange_background",
+        "pink",
+        "pink_background",
+        "purple",
+        "purple_background",
+        "red",
+        "red_background",
+        "yellow",
+        "yellow_background",
     ]
 
 
@@ -90,20 +90,18 @@ class Page(TypedDict):
 
 
 class TemplateMention(TypedDict):
-    type: NotRequired[Literal['template_mention_date', 'template_mention_user']]
-    template_mention_date: NotRequired[Literal['today', 'now']]
-    template_mention_user: NotRequired[Literal['me']]
+    type: NotRequired[Literal["template_mention_date", "template_mention_user"]]
+    template_mention_date: NotRequired[Literal["today", "now"]]
+    template_mention_user: NotRequired[Literal["me"]]
 
 
 class User(TypedDict):
     id: NotRequired[str]
-    object: NotRequired[Literal['user']]
+    object: NotRequired[Literal["user"]]
 
 
 class NMention(TypedDict):
-    type: NotRequired[
-        Literal['database', 'date', 'link_preview', 'page', 'template_mention', 'user']
-    ]
+    type: NotRequired[Literal["database", "date", "link_preview", "page", "template_mention", "user"]]
     database: NotRequired[Database]
     data: NotRequired[Data]
     link_preview: NotRequired[LinkPreview]
@@ -123,12 +121,12 @@ class NRichText(TypedDict):
     text: NotRequired[NTextLink]
     mention: NotRequired[NMention]
     equation: NotRequired[NEquation]
-    type: Literal['text', 'mention', 'equation']
+    type: Literal["text", "mention", "equation"]
 
 
 class NPDInfo(TypedDict):
     id: str
-    object: Literal['page', 'database']
+    object: Literal["page", "database"]
     created_time: str
     last_edited_time: str
     created_by: NCreateEditBy
@@ -147,36 +145,36 @@ class NPDInfo(TypedDict):
 
 
 WorkType = Literal[
-    'book-section',
-    'monograph',
-    'report-component',
-    'report',
-    'peer-review',
-    'book-track',
-    'journal-article',
-    'book-part',
-    'other',
-    'book',
-    'journal-volume',
-    'book-set',
-    'reference-entry',
-    'proceedings-article',
-    'journal',
-    'component',
-    'book-chapter',
-    'proceedings-series',
-    'report-series',
-    'proceedings',
-    'database',
-    'standard',
-    'reference-book',
-    'posted-content',
-    'journal-issue',
-    'dissertation',
-    'grant',
-    'dataset',
-    'book-series',
-    'edited-book',
+    "book-section",
+    "monograph",
+    "report-component",
+    "report",
+    "peer-review",
+    "book-track",
+    "journal-article",
+    "book-part",
+    "other",
+    "book",
+    "journal-volume",
+    "book-set",
+    "reference-entry",
+    "proceedings-article",
+    "journal",
+    "component",
+    "book-chapter",
+    "proceedings-series",
+    "report-series",
+    "proceedings",
+    "database",
+    "standard",
+    "reference-book",
+    "posted-content",
+    "journal-issue",
+    "dissertation",
+    "grant",
+    "dataset",
+    "book-series",
+    "edited-book",
 ]
 
 
@@ -199,7 +197,7 @@ class Author(TypedDict):
 
 
 class DigitalResource(TypedDict):
-    url: NotRequired[str]
+    resourceLink: NotRequired[str]
     contentType: NotRequired[str]
 
 
@@ -208,7 +206,7 @@ class ClinicalTrial(TypedDict):
     registry: NotRequired[str]
 
 
-Platform = Literal['arXiv']
+Platform = Literal["arXiv"]
 
 
 class Work(TypedDict):

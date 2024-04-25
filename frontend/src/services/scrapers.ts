@@ -1,7 +1,7 @@
 import { ARXIV_SUBJECTS, Platform, Work, WorkType } from 'src/models/models';
 import { CrossrefClient } from '@jamesgopsill/crossref-client';
 import wretch from 'wretch';
-import { extractDateNumsFromStr, mergeObjects } from 'src/utils';
+import { extractDateNumsFromStr, mergeObjects } from 'src/services/utils';
 
 const crossrefClient = new CrossrefClient();
 
@@ -39,7 +39,7 @@ export class DOIScraper {
         ORCID: author.ORCID,
       })),
       digitalResources: resJson.link?.map((link) => ({
-        url: link.URL,
+        resourceLink: link.URL,
         description: link.contentType,
       })),
       clinicalTrial: resJson.clinicalTrialNumber?.map((trial) => ({

@@ -341,7 +341,7 @@ components:
       description: 原始内容下载链接
       type: object
       properties:
-        url:
+        resourceLink:
           type: string
           description: 原始内容的下载链接
           format: uri
