@@ -230,9 +230,9 @@ function handleWorkPropertySelection(PDProperty: string, workProperty: string, w
         <q-btn round dense flat icon="mdi-magnify" size="1em" @click="searchByTitle" />
       </template>
     </q-select>
-    <div>
-      <q-markup-table v-show="selectedPD !== null">
-        <thead>
+    <div class="q-mt-lg">
+      <q-markup-table v-show="selectedPD !== null" flat bordered separator="horizontal">
+        <thead class="bg-indigo-1">
           <tr>
             <th>Your Database Column</th>
             <th>Select Corresponding Paper Properties</th>
@@ -243,6 +243,7 @@ function handleWorkPropertySelection(PDProperty: string, workProperty: string, w
             <td>{{ property }}</td>
             <td>
               <q-select
+                filled
                 :options="DisplayedWorkProperties"
                 v-model="selectedPDMapToWork[property]"
                 clearable

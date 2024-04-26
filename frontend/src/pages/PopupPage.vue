@@ -59,7 +59,7 @@ function uploadWorks() {
     </div>
   </div>
   <div class="page-container q-pa-md flex column justify-between no-wrap" v-show="page === 'page-2'">
-    <div style="max-width: 800px; width: 100%; align-self: center">
+    <div style="max-width: 800px; width: 100%; align-self: center; flex: 1; overflow-y: auto">
       <search-page-database :page-database-objs="pageDatabaseObjs"></search-page-database>
     </div>
     <div class="footer-button-group flex justify-end q-mt-sm">
