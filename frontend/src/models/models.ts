@@ -13,6 +13,20 @@ export type Work = components['schemas']['Work'];
 export type Platform = components['schemas']['Platform'];
 export type DigitalResource = components['schemas']['DigitalResource'];
 
+// 这里的 WorkPropertyKeys 包含了 Work 中定义的所有属性名，以及这些属性名的组合/再处理得到的新属性（例如 date 就是 year+month+day 得到）
+export type WorkPropertyKeys = keyof Work | keyof PublishInfo | keyof DigitalResource | 'date';
+
+// key 是 database/page 的属性名（如果是 database，也就是列的列名），value 中 PDPropertyName 还是属性名，PDProperty 是该列的属性，
+// WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
+export type PDToWorkMapping = {
+  [key: string]: {
+    PDPropertyName: string;
+    PDProperty: NProperty;
+    workPropertyName: WorkPropertyKeys;
+    workPropertyLabel: string;
+  };
+};
+
 /**
  * arxiv 网站对文献的主题分类
  */

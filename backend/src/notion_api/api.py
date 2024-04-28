@@ -11,7 +11,7 @@ from notion_client import Client, APIResponseError
 from notion_client.helpers import collect_paginated_api
 
 from config import Config
-from notion_api.models import PageDatabase
+from models import NPDInfo
 
 notion = Client(auth=Config.NOTION_SECRET)
 
@@ -22,19 +22,11 @@ class ErrorResult:
     code: int
 
 
-class SearchByTitleResult(TypedDict):
-    """函数 search_by_title 的返回值。不是 notion api 的原始返回值"""
-
-    title: str
-    id: str
-    url: Optional[str]
-
-
-def search_by_title(query: str, search_for: Literal["database", "page"]) -> list[SearchByTitleResult] | ErrorResult:
+def search_by_title(query: str, search_for: Literal["database", "page"]) -> list[NPDInfo] | ErrorResult:
     """根据标题查找 page 或 database"""
     # page_size 最大值就是 100，即每次最多返回 100 条结果
     try:
-        search_results: list[PageDatabase] = collect_paginated_api(
+        search_results: list[NPDInfo] = collect_paginated_api(
             notion.search,
             **{
                 "query": query,
@@ -43,6 +35,7 @@ def search_by_title(query: str, search_for: Literal["database", "page"]) -> list
                 "page_size": 100,
             }
         )
+        return search_results
     except APIResponseError as error:
         return ErrorResult(message="Notion API error", code=error.status)
     return [

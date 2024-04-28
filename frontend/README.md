@@ -20,7 +20,7 @@
 
 ```shell
 # python. 假设命令行在 backend 文件夹
-datamodel-codegen --input ../models.yaml --output src/models_auto.py --output-model-type typing.TypedDict --input-file-type openapi
+datamodel-codegen --input ../models.yaml --output src/models_auto.py --input-file-type openapi  --encoding UTF-8
 
 # typescript. 假设命令行在 frontend 文件夹
 npx openapi-typescript ../models.yaml -o src/models/models_auto.ts

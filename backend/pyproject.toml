@@ -8,10 +8,11 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 notion-client = "^2.2.1"
-flask = "^3.0.3"
-flask-cors = "^4.0.0"
 python-dotenv = "^1.0.1"
 typing-extensions = "^4.11.0"
+fastapi = "^0.110.2"
+uvicorn = "^0.29.0"
+pydantic = "^2.7.1"
 
 
 [tool.poetry.group.dev.dependencies]
