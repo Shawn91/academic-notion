@@ -69,12 +69,102 @@ components:
           type: string
         type:
           type: string
+          enum: [ checkbox, created_by, created_time, date, email, files, formula, last_edited_by, last_edited_time, multi_select, number, people, phone_number, relation, rich_text, rollup, select, status, title, url ]
           description: 表示这一列是文本、日期、多选等
         name:
           type: string
           description: 这一列展示出来的列名
-        rich_text:
+        formula:
           type: object
+          properties:
+            expression:
+              type: string
+        multi_select:
+          type: array
+          items:
+            type: object
+            properties:
+              color:
+                type: string
+                enum: [ blue, brown, default, gray, green, orange, pink, purple, red, yellow ]
+              id:
+                type: string
+              name:
+                type: string
+        number:
+          type: object
+          properties:
+            format:
+              type: string
+              enum: [ argentine_peso, baht, australian_dollar, canadian_dollar, chilean_peso, colombian_peso, danish_krone, dirham, dollar, euro, forint, franc, hong_kong_dollar, koruna, krona, leu, lira, mexican_peso, new_taiwan_dollar, new_zealand_dollar, norwegian_krone, number, number_with_commas, percent, philippine_peso, pound, peruvian_sol, rand, real, ringgit, riyal, ruble, rupee, rupiah, shekel, singapore_dollar, uruguayan_peso, yen, yuan, won, zloty ]
+        relation:
+          type: object
+          properties:
+            database_id:
+              type: string
+            synced_property_id:
+              type: string
+            synced_property_name:
+              type: string
+        rollup:
+          type: object
+          properties:
+            function:
+              type: string
+              enum: [ average, checked, count_per_group, count, count_values, date_range, earliest_date, empty, latest_date, max, median, min, not_empty, percent_checked, percent_empty, percent_not_empty, percent_per_group, percent_unchecked, range, unchecked, unique, show_original, show_unique, sum ]
+            relation_property_id:
+              type: string
+            relation_property_name:
+              type: string
+            rollup_property_id:
+              type: string
+            rollup_property_name:
+              type: string
+        select:
+          type: object
+          properties:
+            color:
+              type: string
+              enum: [ blue, brown, default, gray, green, orange, pink, purple, red, yellow ]
+            id:
+              type: string
+            name:
+              type: string
+        status:
+          type: object
+          properties:
+            options:
+              type: array
+              items:
+                type: object
+                properties:
+                  color:
+                    type: string
+                    enum: [ blue, brown, default, gray, green, orange, pink, purple, red, yellow ]
+                  id:
+                    type: string
+                  name:
+                    type: string
+                    description: Commas (",") are not valid for status values.
+            groups:
+              type: array
+              items:
+                type: object
+                properties:
+                  color:
+                    type: string
+                    enum: [ blue, brown, default, gray, green, orange, pink, purple, red, yellow ]
+                  id:
+                    type: string
+                  name:
+                    type: string
+                    description: Commas (",") are not valid for status values.
+                  option_ids:
+                    type: array
+                    items:
+                      type: string
+
+
       required:
         - id
         - type
@@ -318,11 +408,11 @@ components:
         pages:
           type: string
         year:
-          type: integer
+          type: string
         month:
-          type: integer
+          type: string
         day:
-          type: integer
+          type: string
 
     Author:
       type: object
