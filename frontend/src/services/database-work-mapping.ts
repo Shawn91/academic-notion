@@ -1,6 +1,3 @@
-/**
- * st.js 的文档见 https://selecttransform.github.io/site/
- */
 import { NProperty, PDToWorkMapping, Work } from 'src/models/models';
 
 function extractDate(work: Work): string | null {
