@@ -1,14 +1,25 @@
-import { ARXIV_SUBJECTS, Platform, Work, WorkType } from 'src/models/models';
+import { ARXIV_SUBJECTS, DigitalResource, Work, WorkType } from 'src/models/models';
 import { CrossrefClient } from '@jamesgopsill/crossref-client';
 import wretch from 'wretch';
 import { extractDateNumsFromStr, mergeObjects } from 'src/services/utils';
 
 const crossrefClient = new CrossrefClient();
 
+class BaseScraper {
+  /**
+   * 给定数字，返回字符串形式，如果小于 10，则前面补 0。主要用于将日期和月份转换
+   */
+  static intToStrWithZero(n: number | undefined): string | undefined {
+    if (n === undefined) return undefined;
+    if (n < 10) return `0${n}`;
+    return `${n}`;
+  }
+}
+
 /**
  * 给定 DOI，从 crossref.org 的 api 中获取论文信息
  */
-export class DOIScraper {
+export class DOIScraper extends BaseScraper {
   static async fetchWorkByDOI(doi: string): Promise<Work | null> {
     const res = await crossrefClient.work(doi);
     if (!(res.ok && res.status == 200)) return null;
@@ -29,9 +40,9 @@ export class DOIScraper {
         issue: resJson.issue,
         volume: resJson.volume,
         pages: resJson.page,
-        year: resJson.issued?.dateParts?.at(0)?.at(0),
-        month: resJson.issued?.dateParts?.at(0)?.at(1),
-        day: resJson.issued?.dateParts?.at(0)?.at(2),
+        year: resJson.issued?.dateParts?.at(0)?.at(0)?.toString(),
+        month: DOIScraper.intToStrWithZero(resJson.issued?.dateParts?.at(0)?.at(1)),
+        day: DOIScraper.intToStrWithZero(resJson.issued?.dateParts?.at(0)?.at(2)),
       },
       authors: resJson.author?.map((author) => ({
         familyName: author.family,
@@ -40,7 +51,7 @@ export class DOIScraper {
       })),
       digitalResources: resJson.link?.map((link) => ({
         resourceLink: link.URL,
-        description: link.contentType,
+        contentType: link.contentType,
       })),
       clinicalTrial: resJson.clinicalTrialNumber?.map((trial) => ({
         id: trial.clinicalTrialNumber,
@@ -53,7 +64,7 @@ export class DOIScraper {
 /**
  * 获取 arxiv 网站搜索结果页的论文信息
  */
-export class ArxivScraper {
+export class ArxivScraper extends BaseScraper {
   /**
    * id 有两种格式：hep-th/9901001 或 0704.0001v1。
    * 对应的论文详情页 link 为 https://arxiv.org/abs/hep-th/9901001 或 https://arxiv.org/abs/0704.0001v1
@@ -159,10 +170,12 @@ export class ArxivScraper {
           }
           if (linkEle.getAttribute('rel') === 'related') {
             if (linkEle.getAttribute('title') === 'pdf') {
-              digitalResources = {
-                url: linkEle.getAttribute('href'),
-                contentType: linkEle.getAttribute('type'),
-              };
+              digitalResources = [
+                {
+                  resourceLink: linkEle.getAttribute('href'),
+                  contentType: linkEle.getAttribute('type'),
+                },
+              ];
             }
             if (linkEle.getAttribute('title') === 'doi') {
               url = linkEle.getAttribute('href') as string;

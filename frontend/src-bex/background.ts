@@ -1,6 +1,6 @@
 import { bexBackground } from 'quasar/wrappers';
 import { ArxivScraper } from 'src/services/scrapers';
-import { searchPageDatabaseByTitle } from 'src/services/api';
+import { searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
 
 /**
  * This function will be injected into active tab.
@@ -53,6 +53,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     searchPageDatabaseByTitle(request.data.query).then((res) => {
       sendResponse(res);
     });
+  } else if (request.message == 'upload-works') {
+    uploadWorks(request.data['pageDatabase'], request.data['works'], request.data['databaseToWorkMapping']).then(
+      (res) => {
+        sendResponse(res);
+      }
+    );
   }
   return true;
 });

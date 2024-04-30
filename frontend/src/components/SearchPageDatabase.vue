@@ -8,17 +8,15 @@
 -->
 <script setup lang="ts">
 import { ref } from 'vue';
-import { DigitalResource, NPDInfo, PublishInfo, Work } from 'src/models/models';
+import { NPDInfo, NProperty, PDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
-
-type WORK_PROPERTY_KEYS = keyof Work | keyof PublishInfo | keyof DigitalResource | 'date';
 
 // 用于在 q-select 中提示用户，本程序支持哪些文献属性
 const DisplayedWorkProperties: {
   label: string;
   icon: string;
-  children: { label: string; key: WORK_PROPERTY_KEYS; description: string }[];
+  children: { label: string; key: WorkPropertyKeys; description: string }[];
 }[] = [
   {
     label: 'Basic Info',
@@ -143,14 +141,17 @@ interface Props {
 
 const props = defineProps<Props>();
 // 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPD
-const selectedPD = ref<NPDInfo | null>(null);
-// key 是 database 的列名，value 是对应的 DisplayedWorkProperties 中的 "key" 字段的值，或者为空字符串
-const selectedPDMapToWork = ref<{ [key: string]: { label: string; key: string } | null }>({});
+const selectedPD = defineModel<NPDInfo | null>('selectedPD', { default: null });
+// key 是 database 的 column 列名，value 中 PDPropertyName 还是 column 列名，PDProperty 是该列的属性，
+// WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
+const selectedPDMapToWork = ref<PDToWorkMapping>({});
 const qSelectComponent = ref<QSelect | null>(null);
 let titleQuery = ''; // 用于搜索page或database的关键字
 
 const pageDatabaseOptions = ref(props.pageDatabaseObjs);
 const filteredPDOptions = ref(props.pageDatabaseObjs);
+
+const emit = defineEmits(['database-work-mapped']);
 
 function filterByTitle(val: string, update: (arg0: () => void) => void) {
   update(() => {
@@ -183,27 +184,25 @@ function searchByTitle() {
   );
 }
 
-/**
- * 每当用户选择一个 pages 或 databases 时，调用此函数
- */
-function handlePDSelection() {
-  // 初始化 selectedPD
-  if (selectedPD.value?.properties) {
-    selectedPDMapToWork.value = Object.keys(selectedPD.value.properties).reduce(
-      (accu: { [key: string]: null }, currentValue: string) => {
-        accu[currentValue] = null;
-        return accu;
-      },
-      {}
+function handleWorkPropertySelection(
+  PDProperty: NProperty,
+  PDPropertyName: string,
+  workPropertyName: WorkPropertyKeys,
+  workPropertyLabel: string
+) {
+  if (selectedPDMapToWork.value) {
+    selectedPDMapToWork.value[PDPropertyName] = {
+      PDPropertyName: PDPropertyName,
+      PDProperty: PDProperty,
+      workPropertyName: workPropertyName,
+      workPropertyLabel: workPropertyLabel,
+    };
+    // 去除掉值为 null 的 keys
+    selectedPDMapToWork.value = Object.fromEntries(
+      Object.entries(selectedPDMapToWork.value).filter(([_, value]) => value !== null)
     );
+    emit('database-work-mapped', selectedPDMapToWork.value);
   }
-}
-
-function handleWorkPropertySelection(PDProperty: string, workProperty: string, workPropertyLabel: string) {
-  if (selectedPDMapToWork.value && PDProperty && workProperty) {
-    selectedPDMapToWork.value[PDProperty] = { key: workProperty, label: workPropertyLabel };
-  }
-  console.log(selectedPDMapToWork.value);
 }
 </script>
 
@@ -221,7 +220,6 @@ function handleWorkPropertySelection(PDProperty: string, workProperty: string, w
       use-chips
       @filter="filterByTitle"
       label="Search for a database to upload to"
-      @update:model-value="handlePDSelection"
     >
       <template v-slot:prepend>
         <q-icon name="mdi-database-search-outline" />
@@ -239,16 +237,16 @@ function handleWorkPropertySelection(PDProperty: string, workProperty: string, w
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(_, property) in selectedPD?.properties" :key="property">
-            <td>{{ property }}</td>
+          <tr v-for="(property, propertyName) in selectedPD?.properties" :key="propertyName">
+            <td>{{ propertyName }}</td>
             <td>
               <q-select
                 filled
                 :options="DisplayedWorkProperties"
-                v-model="selectedPDMapToWork[property]"
+                v-model="selectedPDMapToWork[propertyName]"
                 clearable
                 options-selected-class="text-deep-orange"
-                :display-value="selectedPDMapToWork[property]?.['label'] as string"
+                :display-value="selectedPDMapToWork[propertyName]?.['workPropertyLabel'] as string"
               >
                 <template v-slot:option="scope">
                   <q-list separator>
@@ -265,7 +263,7 @@ function handleWorkPropertySelection(PDProperty: string, workProperty: string, w
                         clickable
                         v-ripple
                         v-close-popup
-                        @click="handleWorkPropertySelection(property as string, child.key, child.label)"
+                        @click="handleWorkPropertySelection(property, propertyName as string, child.key, child.label)"
                       >
                         <q-item-section>
                           <q-item-label class="q-ml-lg">{{ child.label }}</q-item-label>

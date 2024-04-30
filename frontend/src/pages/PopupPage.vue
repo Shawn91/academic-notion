@@ -1,6 +1,6 @@
 <!-- This is a popup page that runs inside an iframe. -->
 <script setup lang="ts">
-import { NPDInfo, Work } from 'src/models/models';
+import { NPDInfo, PDToWorkMapping, Work } from 'src/models/models';
 import WorkTable from 'components/WorkTable.vue';
 import { ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
@@ -8,8 +8,14 @@ import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
 const pageDatabaseObjs = ref<NPDInfo[]>([]); // 当前网页中提取的文献信息
 let selectedWorks: Work[] = []; // 选中的文献
-let selectedPD: NPDInfo | null = null;
+let selectedPD = ref<NPDInfo | null>(null);
+// 当前 popup page 是分为了多页，当前展示第几页
 let page = ref('page-1');
+
+// 存储用户定义的 database column 到 work property 的对应关系。
+// key 是 database 的 column 列名，value 中 PDPropertyName 还是 column 列名，PDProperty 是该列的属性，
+// WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
+let databaseToWorkMapping: PDToWorkMapping = {};
 
 window.addEventListener('message', (event) => {
   if (event.data.message === 'works') {
@@ -31,13 +37,20 @@ function handleWorksSelected(data: Work[]) {
 function uploadWorks() {
   chrome.runtime.sendMessage(
     {
-      data: { works: selectedWorks, pageDatabase: selectedPD },
+      data: { works: selectedWorks, pageDatabase: selectedPD.value, databaseToWorkMapping: databaseToWorkMapping },
       message: 'upload-works',
     },
     (res) => {
       console.log(res);
     }
   );
+}
+
+/**
+ * 从 SearchPageDatabase.vue 子组件传递过来的用户定义的 database column 到 work property 的对应关系
+ */
+function handleDatabaseWorkMapping(data: PDToWorkMapping) {
+  databaseToWorkMapping = data;
 }
 </script>
 
@@ -60,7 +73,11 @@ function uploadWorks() {
   </div>
   <div class="page-container q-pa-md flex column justify-between no-wrap" v-show="page === 'page-2'">
     <div style="max-width: 800px; width: 100%; align-self: center; flex: 1; overflow-y: auto">
-      <search-page-database :page-database-objs="pageDatabaseObjs"></search-page-database>
+      <search-page-database
+        :page-database-objs="pageDatabaseObjs"
+        @database-work-mapped="handleDatabaseWorkMapping"
+        v-model:selectedPD="selectedPD"
+      ></search-page-database>
     </div>
     <div class="footer-button-group flex justify-end q-mt-sm">
       <q-btn color="primary" label="Upload" @click="uploadWorks" />

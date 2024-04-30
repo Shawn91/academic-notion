@@ -1,15 +1,15 @@
 /**
  * 从 2007-02-27 00:00:00 格式的字符串中提取出年月日
  */
-export function extractDateNumsFromStr(str: string): { year: number; month: number; day: number } | null {
+export function extractDateNumsFromStr(str: string): { year: string; month: string; day: string } | undefined {
   const date = new Date(str);
   if (isNaN(date.getTime())) {
-    return null;
+    return undefined;
   }
   return {
-    year: date.getFullYear(),
-    month: date.getMonth() + 1,
-    day: date.getDate(),
+    year: date.getFullYear().toString(),
+    month: date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : (date.getMonth() + 1).toString(),
+    day: date.getDate() < 10 ? `0${date.getDate()}` : date.getDate().toString(),
   };
 }
 
