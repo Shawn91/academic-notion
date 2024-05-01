@@ -1,9 +1,8 @@
 import sys
 from pathlib import Path
-from pprint import pprint
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import FastAPI, status, Body
+from fastapi import FastAPI, status, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -11,7 +10,7 @@ sys.path.append(str(Path(__file__).parent.resolve()))
 
 from models import SearchByTitleRequest, ApiResponse
 from config import Config
-from notion_api.api import search_by_title, ErrorResult, APIResponseError, upload_works
+from notion_api.api import search_by_title, ErrorResult, APIResponseError, upload_works, get_page_database_by_id
 
 app = FastAPI()
 app.add_middleware(
@@ -46,6 +45,15 @@ def search_by_title_endpoint(request: SearchByTitleRequest):
         return ApiResponse(success=True, data=result)
     except APIResponseError as e:
         return ApiResponse(success=False, code=status.HTTP_500_INTERNAL_SERVER_ERROR, message=str(e))
+
+
+@app.get("/page-database/", response_model=ApiResponse)
+def page_database_endpoint(
+    PDId: str = Query(),
+    PDType: Literal["page", "database"] = Query(),
+):
+    result = get_page_database_by_id(pd_id=PDId, pd_type=PDType)
+    return ApiResponse(success=True, data=result)
 
 
 if __name__ == "__main__":

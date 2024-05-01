@@ -4,6 +4,8 @@ import { NPDInfo, PDToWorkMapping, Work } from 'src/models/models';
 import WorkTable from 'components/WorkTable.vue';
 import { ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
+import { UserDataLocalManager } from 'src/services/user-data-manager';
+import { is } from 'quasar';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
 const pageDatabaseObjs = ref<NPDInfo[]>([]); // 当前网页中提取的文献信息
@@ -34,16 +36,37 @@ function handleWorksSelected(data: Work[]) {
   selectedWorks = data;
 }
 
-function uploadWorks() {
-  chrome.runtime.sendMessage(
-    {
-      data: { works: selectedWorks, pageDatabase: selectedPD.value, databaseToWorkMapping: databaseToWorkMapping },
-      message: 'upload-works',
-    },
-    (res) => {
-      console.log(res);
-    }
-  );
+async function uploadWorks() {
+  await chrome.runtime.sendMessage({
+    data: { works: selectedWorks, pageDatabase: selectedPD.value, databaseToWorkMapping: databaseToWorkMapping },
+    message: 'upload-works',
+  });
+}
+
+/**
+ * 点击上传按钮后:
+ * 1. 要获取当前选中的 database 的最新的 schema（因为当前的 mapping 可能不是最新的，而是保存的旧的）
+ * 2. 比较当前的 schema 与保存在本地的 mapping 中的 schema 是否相同
+ * 3. 如果不相同需要弹窗提示用户重新设置 schema，如果相同则直接上传
+ * 4. 根据新的 schema，尽可能帮用户自动推测 mapping，然后让用户调整。
+ * 5. 当用户再次点击上传，此时的 schema 与 mapping 肯定已经对应上，直接上传
+ */
+async function handleUploadWorkButtonClicked() {
+  // 1. 获取当前选中的 database 的最新的 schema
+  const selectedPDInfo: NPDInfo = (
+    await chrome.runtime.sendMessage({
+      message: 'fetch-pages-databases',
+      data: { id: selectedPD.value?.id, PDType: 'database' },
+    })
+  ).data;
+  const selectedPDOldInfo = await UserDataLocalManager.getPDInfo(selectedPDInfo.id);
+  // 2. 比较最新 schema 与旧的 schema 之间是否一致
+  if (is.deepEqual(selectedPDInfo.properties, selectedPDOldInfo?.properties)) {
+    await uploadWorks(); // 一致，直接上传
+  } else {
+    // 保存最新的 schema 到本地
+    await UserDataLocalManager.savePDInfo(selectedPDInfo);
+  }
 }
 
 /**
@@ -80,7 +103,7 @@ function handleDatabaseWorkMapping(data: PDToWorkMapping) {
       ></search-page-database>
     </div>
     <div class="footer-button-group flex justify-end q-mt-sm">
-      <q-btn color="primary" label="Upload" @click="uploadWorks" />
+      <q-btn color="primary" label="Upload" @click="handleUploadWorkButtonClicked" />
       <q-btn color="white" class="q-ml-md" text-color="black" label="Cancel" @click="closePopup()" />
       <q-btn color="secondary" class="q-ml-md" label="Back" @click="page = 'page-1'" />
     </div>

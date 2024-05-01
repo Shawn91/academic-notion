@@ -17,7 +17,7 @@ export type DigitalResource = components['schemas']['DigitalResource'];
 export type WorkPropertyKeys = keyof Work | keyof PublishInfo | keyof DigitalResource | 'date';
 
 // key 是 database/page 的属性名（如果是 database，也就是列的列名），value 中 PDPropertyName 还是属性名，PDProperty 是该列的属性，
-// WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
+// WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值，仅用于展示用
 export type PDToWorkMapping = {
   [key: string]: {
     PDPropertyName: string;

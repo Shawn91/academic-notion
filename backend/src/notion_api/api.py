@@ -74,3 +74,14 @@ def upload_works(work_to_database_properties: list[dict]) -> list[NPDInfo | Erro
                 ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)
             )
     return results
+
+
+def get_page_database_by_id(pd_id: str, pd_type: Literal["page", "database"]) -> NPDInfo | ErrorResult:
+    try:
+        if pd_type == "page":
+            pd = notion.pages.retrieve(page_id=pd_id)
+        else:
+            pd = notion.databases.retrieve(database_id=pd_id)
+        return pd
+    except APIResponseError as error:
+        return ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)

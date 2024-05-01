@@ -169,7 +169,7 @@ function filterByTitle(val: string, update: (arg0: () => void) => void) {
 function searchByTitle() {
   chrome.runtime.sendMessage(
     {
-      message: 'fetch-pages-databases-by-title',
+      message: 'fetch-pages-databases',
       data: { query: titleQuery },
     },
     function (res: Response<NPDInfo[]>) {
@@ -228,6 +228,7 @@ function handleWorkPropertySelection(
         <q-btn round dense flat icon="mdi-magnify" size="1em" @click="searchByTitle" />
       </template>
     </q-select>
+    <p class="text-caption q-mt-xs">If you don't see your database in the dropdown, please click the Magnifier icon.</p>
     <div class="q-mt-lg">
       <q-markup-table v-show="selectedPD !== null" flat bordered separator="horizontal">
         <thead class="bg-indigo-1">

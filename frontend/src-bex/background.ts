@@ -1,6 +1,6 @@
 import { bexBackground } from 'quasar/wrappers';
 import { ArxivScraper } from 'src/services/scrapers';
-import { searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
+import { fetchPageDatabaseByID, searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
 
 /**
  * This function will be injected into active tab.
@@ -49,16 +49,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     ArxivScraper.fetchRawWorksInfo(request.data).then((res) => {
       sendResponse({ data: res });
     });
-  } else if (request.message == 'fetch-pages-databases-by-title') {
-    searchPageDatabaseByTitle(request.data.query).then((res) => {
-      sendResponse(res);
-    });
+  } else if (request.message == 'fetch-pages-databases') {
+    // 根据关键字搜索数
+    if (request.data.query) {
+      searchPageDatabaseByTitle(request.data.query).then((res) => {
+        sendResponse(res);
+      });
+    } else if (request.data.id) {
+      // 根据 id 直接获取该 page/database 的最新信息
+      fetchPageDatabaseByID(request.data.id, request.data.PDType).then((res) => {
+        sendResponse(res);
+      });
+    }
   } else if (request.message == 'upload-works') {
     uploadWorks(request.data['pageDatabase'], request.data['works'], request.data['databaseToWorkMapping']).then(
       (res) => {
         sendResponse(res);
       }
     );
+  } else if (request.message == 'set-storage') {
+    chrome.storage.local.set({ [request.data['key']]: request.data['value'] }, () => {
+      sendResponse(true);
+    });
+  } else if (request.message == 'get-storage') {
+    chrome.storage.local.get([request.data['key']], (items) => {
+      sendResponse(items[request.data['key']]);
+    });
   }
   return true;
 });
