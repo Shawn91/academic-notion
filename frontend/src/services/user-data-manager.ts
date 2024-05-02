@@ -42,23 +42,37 @@ export class UserDataLocalManager {
   }
 
   /**
-   * 获取一个 page/database 的 schema
+   * 获取一个 page/database 的 schema。如果 id=null，则返回所有本地保存过的 schemas
    */
-  static async getPDInfo(id: string): Promise<NPDInfo | null> {
-    const key = `${StorageKey.PDInfo}-${id}`;
+  static async getPDInfo(id: string | null = null): Promise<NPDInfo | null | Record<string, NPDInfo>> {
+    let pdInfos: Record<string, NPDInfo>; // {id: schema}
     if (detectBexEnvironment() === BexEnvironment.Background) {
-      return (await chrome.storage.local.get([key]))[key];
+      pdInfos = (await chrome.storage.local.get([StorageKey.PDInfo]))?.[StorageKey.PDInfo];
     } else {
-      return await chrome.runtime.sendMessage({ message: 'get-storage', data: { key: key } });
+      pdInfos = await chrome.runtime.sendMessage({ message: 'get-storage', data: { key: StorageKey.PDInfo } });
     }
+    if (id) {
+      return pdInfos?.[id];
+    }
+    return pdInfos;
   }
 
+  /**
+   * 存储的是所有上传过文献的数据库的 schema 到本地，格式为 {StorageKey.PDInfo: {id1: {schema}, id2: {schema}}}
+   */
   static async savePDInfo(info: NPDInfo) {
-    const key = `${StorageKey.PDInfo}-${info.id}`;
+    let existedPDInfos = (await UserDataLocalManager.getPDInfo()) as Record<string, NPDInfo> | null;
+    if (!existedPDInfos) {
+      existedPDInfos = {};
+    }
+    existedPDInfos[info.id] = info;
     if (detectBexEnvironment() === BexEnvironment.Background) {
-      await chrome.storage.local.set({ [key]: info });
+      await chrome.storage.local.set({ [StorageKey.PDInfo]: existedPDInfos });
     } else {
-      await chrome.runtime.sendMessage({ message: 'set-storage', data: { key: key, value: info } });
+      await chrome.runtime.sendMessage({
+        message: 'set-storage',
+        data: { key: StorageKey.PDInfo, value: existedPDInfos },
+      });
     }
   }
 }

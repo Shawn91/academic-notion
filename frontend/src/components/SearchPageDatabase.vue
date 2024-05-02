@@ -1,13 +1,13 @@
 <!--流程：
-1. PopupPage.vue 调用本组件时，传入一个 pageDatabaseObjs 数组，存储的是过往已经上传过的 pages 或 databases
+1. PopupPage.vue 调用本组件时，传入一个 existedPDInfo 数组，存储的是过往已经上传过的 pages 或 databases
 （暂时未考虑如果这个 page 或 database 已经删除了怎么办）
-2. 本组件内，在搜索框输入关键字时，默认是从 pageDatabaseObjs 中过滤
-3. 在搜索框输入关键字后，点击搜索按钮，此时向后端发送请求，搜索包含关键字的 pages 或 databases，并覆盖 pageDatabaseObjs
-4. 如果搜索框中的关键字并不在 pageDatabaseObjs 中，那么当搜索框失焦后，会自动删除关键字，因此为了确保点击搜索按钮时，
+2. 本组件内，在搜索框输入关键字时，默认是从 existedPDInfo 中过滤
+3. 在搜索框输入关键字后，点击搜索按钮，此时向后端发送请求，搜索包含关键字的 pages 或 databases，并覆盖 existedPDInfo
+4. 如果搜索框中的关键字并不在 existedPDInfo 中，那么当搜索框失焦后，会自动删除关键字，因此为了确保点击搜索按钮时，
   还能获取到关键字，所以需要一个 titleQuery 变量，每当搜索框内容变化时（即调用 filter 函数时），更新 titleQuery
 -->
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { NPDInfo, NProperty, PDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
@@ -135,21 +135,22 @@ const DisplayedWorkProperties: {
   },
 ];
 
-interface Props {
-  pageDatabaseObjs: NPDInfo[];
-}
-
-const props = defineProps<Props>();
+// interface Props {
+//   // existedPDInfo: NPDInfo[];
+// }
+//
+// const props = defineProps<Props>();
 // 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPD
 const selectedPD = defineModel<NPDInfo | null>('selectedPD', { default: null });
+const existedPDInfo = defineModel<NPDInfo[]>('existedPDInfo', { default: [] });
 // key 是 database 的 column 列名，value 中 PDPropertyName 还是 column 列名，PDProperty 是该列的属性，
 // WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
 const selectedPDMapToWork = ref<PDToWorkMapping>({});
 const qSelectComponent = ref<QSelect | null>(null);
 let titleQuery = ''; // 用于搜索page或database的关键字
 
-const pageDatabaseOptions = ref(props.pageDatabaseObjs);
-const filteredPDOptions = ref(props.pageDatabaseObjs);
+// const pageDatabaseOptions = ref(existedPDInfo);
+const filteredPDOptions = ref(existedPDInfo.value);
 
 const emit = defineEmits(['database-work-mapped']);
 
@@ -157,7 +158,7 @@ function filterByTitle(val: string, update: (arg0: () => void) => void) {
   update(() => {
     titleQuery = val;
     const needle = val.toLowerCase();
-    filteredPDOptions.value = pageDatabaseOptions.value.filter(
+    filteredPDOptions.value = existedPDInfo.value.filter(
       (pdInfo) => pdInfo.title[0].plain_text.toLowerCase().indexOf(needle) > -1
     );
   });
@@ -174,11 +175,14 @@ function searchByTitle() {
     },
     function (res: Response<NPDInfo[]>) {
       if (res.success) {
-        pageDatabaseOptions.value = res.data.map((pdInfo) => {
+        existedPDInfo.value = res.data.map((pdInfo) => {
           pdInfo.object = 'database';
           return pdInfo;
         });
-        qSelectComponent.value?.showPopup();
+        filteredPDOptions.value = existedPDInfo.value;
+        nextTick(() => {
+          qSelectComponent.value?.showPopup();
+        });
       }
     }
   );
