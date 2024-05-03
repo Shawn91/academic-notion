@@ -52,7 +52,7 @@ async function uploadWorks() {
  * 5. 当用户再次点击上传，此时的 schema 与 mapping 肯定已经对应上，直接上传
  */
 async function handleUploadWorkButtonClicked() {
-  // 1. 获取当前选中的 database 的最新的 schema
+  // 1. ；远程获取当前选中的 database 的最新的 schema
   const selectedPDInfo: NPDInfo = (
     await chrome.runtime.sendMessage({
       message: 'fetch-pages-databases',
@@ -62,9 +62,11 @@ async function handleUploadWorkButtonClicked() {
   const selectedPDOldInfo = await UserDataLocalManager.getPDInfo(selectedPDInfo.id);
   // 2. 比较最新 schema 与旧的 schema 之间是否一致
   if (is.deepEqual(selectedPDInfo.properties, selectedPDOldInfo?.properties)) {
-    await uploadWorks(); // 一致，直接上传
+    await UserDataLocalManager.savePDToWorkMapping(selectedPD.value?.id as string, databaseToWorkMapping);
+    await uploadWorks(); // 一致，直接上传文献
   } else {
-    // 保存最新的 schema 到本地
+    // 更新展示的数据库列
+    selectedPD.value = selectedPDInfo;
     await UserDataLocalManager.savePDInfo(selectedPDInfo);
   }
 }
