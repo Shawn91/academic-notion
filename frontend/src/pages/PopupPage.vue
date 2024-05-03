@@ -18,6 +18,7 @@ let pageNum = ref('page-1');
 // key 是 database 的 column 列名，value 中 PDPropertyName 还是 column 列名，PDProperty 是该列的属性，
 // WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
 let databaseToWorkMapping: PDToWorkMapping = {};
+const showPDInfoOutdatedDialog = ref(false);
 
 window.addEventListener('message', (event) => {
   if (event.data.message === 'works') {
@@ -65,6 +66,7 @@ async function handleUploadWorkButtonClicked() {
     await UserDataLocalManager.savePDToWorkMapping(selectedPD.value?.id as string, databaseToWorkMapping);
     await uploadWorks(); // 一致，直接上传文献
   } else {
+    showPDInfoOutdatedDialog.value = true;
     // 更新展示的数据库列
     selectedPD.value = selectedPDInfo;
     await UserDataLocalManager.savePDInfo(selectedPDInfo);
@@ -117,6 +119,22 @@ onMounted(async () => {
       <q-btn color="white" class="q-ml-md" text-color="black" label="Cancel" @click="closePopup()" />
       <q-btn color="secondary" class="q-ml-md" label="Back" @click="pageNum = 'page-1'" />
     </div>
+
+    <q-dialog v-model="showPDInfoOutdatedDialog" persistent>
+      <q-card>
+        <q-card-section class="items-center column">
+          <q-avatar icon="published_with_changes" color="primary" text-color="white" />
+          <span class="q-ml-sm q-mt-md"
+            >You have modified your database columns since last upload. Please double-check the mapping is correct and
+            click the "UPLOAD" button again to proceed.</span
+          >
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
