@@ -110,8 +110,17 @@ export function transformFromWorkToPDItem(mapping: PDToWorkMapping, work: Work) 
 }
 
 /**
- * 判断文献的数据类型与数据库列的数据类型是否匹配
+ * 部分 notion 数据库列的数据类型是不可能对应到一个文献字段上的。这里返回可能对应上的数据类型
  */
-function checkMappingType() {
-  console.log('xxx');
+export function isCompatiblePDPropertyType(PDProperty: NProperty): boolean {
+  return (
+    PDProperty.type === 'date' ||
+    PDProperty.type === 'files' ||
+    PDProperty.type === 'multi_select' ||
+    PDProperty.type === 'number' ||
+    PDProperty.type === 'rich_text' ||
+    PDProperty.type === 'select' ||
+    PDProperty.type === 'title' ||
+    PDProperty.type === 'url'
+  );
 }

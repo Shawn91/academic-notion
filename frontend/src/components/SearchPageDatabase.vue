@@ -7,10 +7,11 @@
   还能获取到关键字，所以需要一个 titleQuery 变量，每当搜索框内容变化时（即调用 filter 函数时），更新 titleQuery
 -->
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { NPDInfo, NProperty, PDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
+import { isCompatiblePDPropertyType } from 'src/services/database-work-mapping';
 
 // 用于在 q-select 中提示用户，本程序支持哪些文献属性
 const DisplayedWorkProperties: {
@@ -135,13 +136,19 @@ const DisplayedWorkProperties: {
   },
 ];
 
-// interface Props {
-//   // existedPDInfo: NPDInfo[];
-// }
-//
-// const props = defineProps<Props>();
 // 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPD
 const selectedPD = defineModel<NPDInfo | null>('selectedPD', { default: null });
+const selectedPDCompatibleProperties = computed(() => {
+  if (selectedPD.value) {
+    return Object.keys(selectedPD.value?.properties).reduce<Record<string, NProperty>>((acc, key) => {
+      if (isCompatiblePDPropertyType(selectedPD.value?.properties[key] as NProperty)) {
+        acc[key] = selectedPD.value?.properties[key] as NProperty;
+      }
+      return acc;
+    }, {});
+  }
+  return {};
+});
 const existedPDInfo = defineModel<NPDInfo[]>('existedPDInfo', { default: [] });
 // key 是 database 的 column 列名，value 中 PDPropertyName 还是 column 列名，PDProperty 是该列的属性，
 // WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
@@ -242,7 +249,12 @@ function handleWorkPropertySelection(
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(property, propertyName) in selectedPD?.properties" :key="propertyName">
+          <tr>
+            <td colspan="2" class="text-caption text-grey">
+              Some of your columns may not show here due to incompatible types.
+            </td>
+          </tr>
+          <tr v-for="(property, propertyName) in selectedPDCompatibleProperties" :key="propertyName">
             <td>{{ propertyName }}</td>
             <td>
               <q-select
