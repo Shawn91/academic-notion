@@ -8,7 +8,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
-import { NPDInfo, NProperty, PDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
+import { NPDInfo, NProperty, PDToWorkMapping, SavedPDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
 import { isCompatiblePDPropertyType } from 'src/services/database-work-mapping';
@@ -136,36 +136,46 @@ const DisplayedWorkProperties: {
   },
 ];
 
-// 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPD
-const selectedPD = defineModel<NPDInfo | null>('selectedPD', { default: null });
+const existedPDInfo = defineModel<{ [p: string]: NPDInfo }>('existedPDInfo', { default: {} });
+// 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPDId
+const selectedPDId = defineModel<string | undefined>('selectedPDId', { default: undefined });
+const selectedPDInfo = computed(() => (selectedPDId.value ? existedPDInfo.value[selectedPDId.value] : undefined));
+
+// 选中的数据库中，哪些列是可能有对应的文献属性的
 const selectedPDCompatibleProperties = computed(() => {
-  if (selectedPD.value) {
-    return Object.keys(selectedPD.value?.properties).reduce<Record<string, NProperty>>((acc, key) => {
-      if (isCompatiblePDPropertyType(selectedPD.value?.properties[key] as NProperty)) {
-        acc[key] = selectedPD.value?.properties[key] as NProperty;
-      }
-      return acc;
-    }, {});
+  if (selectedPDId.value && selectedPDInfo.value) {
+    return Object.keys(selectedPDInfo.value.properties as Record<string, NProperty>).reduce<Record<string, NProperty>>(
+      (acc, key) => {
+        if (isCompatiblePDPropertyType(selectedPDInfo.value?.properties[key] as NProperty)) {
+          acc[key] = selectedPDInfo.value?.properties[key] as NProperty;
+        }
+        return acc;
+      },
+      {}
+    );
   }
   return {};
 });
-const existedPDInfo = defineModel<NPDInfo[]>('existedPDInfo', { default: [] });
-// key 是 database 的 column 列名，value 中 PDPropertyName 还是 column 列名，PDProperty 是该列的属性，
-// WorkPropertyLabel 是 DisplayedWorkProperties 中的各个 Label 值
-const selectedPDMapToWork = ref<PDToWorkMapping>({});
+
+const existedPDToWorkMappings = defineModel<{
+  [key: string]: SavedPDToWorkMapping;
+}>('existedPDToWorkMappings', { default: {} });
+
+const selectedPDMapToWork = ref<PDToWorkMapping>(
+  selectedPDId.value ? existedPDToWorkMappings.value[selectedPDId.value]['mapping'] : {}
+);
+
+
 const qSelectComponent = ref<QSelect | null>(null);
 let titleQuery = ''; // 用于搜索page或database的关键字
 
-// const pageDatabaseOptions = ref(existedPDInfo);
-const filteredPDOptions = ref(existedPDInfo.value);
-
-const emit = defineEmits(['database-work-mapped']);
+const filteredPDOptions = ref(Object.values(existedPDInfo.value));
 
 function filterByTitle(val: string, update: (arg0: () => void) => void) {
   update(() => {
     titleQuery = val;
     const needle = val.toLowerCase();
-    filteredPDOptions.value = existedPDInfo.value.filter(
+    filteredPDOptions.value = Object.values(existedPDInfo.value).filter(
       (pdInfo) => pdInfo.title[0].plain_text.toLowerCase().indexOf(needle) > -1
     );
   });
@@ -182,11 +192,16 @@ function searchByTitle() {
     },
     function (res: Response<NPDInfo[]>) {
       if (res.success) {
-        existedPDInfo.value = res.data.map((pdInfo) => {
-          pdInfo.object = 'database';
-          return pdInfo;
+        selectedPDId.value = undefined;
+        existedPDInfo.value = res.data.reduce<{ [key: string]: NPDInfo }>((acc, cur) => {
+          acc[cur.id] = cur;
+          return acc;
+        }, {});
+        // 候选的数据库列表变化了，相应地 existedPDToWorkMappings 也要变化
+        Object.keys(existedPDInfo.value).forEach((PDId: string) => {
+          if (PDId in existedPDToWorkMappings.value) return;
+          existedPDToWorkMappings.value[PDId] = { mapping: {} };
         });
-        filteredPDOptions.value = existedPDInfo.value;
         nextTick(() => {
           qSelectComponent.value?.showPopup();
         });
@@ -195,25 +210,31 @@ function searchByTitle() {
   );
 }
 
+/**
+ * 当用户选定了要上传的数据库后，需要更新 selectedPDMapToWork 的值
+ * @param pdId 选中的数据库的 id。注意，当本函数被调用时，selectedPDId 可能还没有被更新，但是 nextTick 更新后，值就是这里的 pdId
+ */
+function handlePDSelection(pdId: string) {
+  if (pdId in existedPDToWorkMappings.value) {
+    selectedPDMapToWork.value = existedPDToWorkMappings.value[pdId]['mapping'] as PDToWorkMapping;
+  } else {
+    selectedPDMapToWork.value = {};
+    existedPDToWorkMappings.value[pdId] = { mapping: selectedPDMapToWork.value };
+  }
+}
+
 function handleWorkPropertySelection(
   PDProperty: NProperty,
   PDPropertyName: string,
   workPropertyName: WorkPropertyKeys,
   workPropertyLabel: string
 ) {
-  if (selectedPDMapToWork.value) {
-    selectedPDMapToWork.value[PDPropertyName] = {
-      PDPropertyName: PDPropertyName,
-      PDProperty: PDProperty,
-      workPropertyName: workPropertyName,
-      workPropertyLabel: workPropertyLabel,
-    };
-    // 去除掉值为 null 的 keys
-    selectedPDMapToWork.value = Object.fromEntries(
-      Object.entries(selectedPDMapToWork.value).filter(([_, value]) => value !== null)
-    );
-    emit('database-work-mapped', selectedPDMapToWork.value);
-  }
+  selectedPDMapToWork.value[PDPropertyName] = {
+    PDPropertyName: PDPropertyName,
+    PDProperty: PDProperty,
+    workPropertyName: workPropertyName,
+    workPropertyLabel: workPropertyLabel,
+  };
 }
 </script>
 
@@ -221,16 +242,20 @@ function handleWorkPropertySelection(
   <div>
     <q-select
       ref="qSelectComponent"
-      v-model="selectedPD"
+      v-model="selectedPDId"
       :options="filteredPDOptions"
       use-input
       rounded
       outlined
       input-debounce="0"
-      :option-label="(opt) => opt['title'][0]['plain_text']"
+      :option-value="(opt:NPDInfo) => opt.id"
+      :option-label="(opt:NPDInfo) => opt['title']?.[0]?.['plain_text']"
+      map-options
+      emit-value
       use-chips
       @filter="filterByTitle"
       label="Search for a database to upload to"
+      @update:model-value="handlePDSelection"
     >
       <template v-slot:prepend>
         <q-icon name="mdi-database-search-outline" />
@@ -241,7 +266,7 @@ function handleWorkPropertySelection(
     </q-select>
     <p class="text-caption q-mt-xs">If you don't see your database in the dropdown, please click the Magnifier icon.</p>
     <div class="q-mt-lg">
-      <q-markup-table v-show="selectedPD !== null" flat bordered separator="horizontal">
+      <q-markup-table v-if="selectedPDId" flat bordered separator="horizontal">
         <thead class="bg-indigo-1">
           <tr>
             <th>Your Database Column</th>
@@ -262,7 +287,6 @@ function handleWorkPropertySelection(
                 :options="DisplayedWorkProperties"
                 v-model="selectedPDMapToWork[propertyName]"
                 clearable
-                options-selected-class="text-deep-orange"
                 :display-value="selectedPDMapToWork[propertyName]?.['workPropertyLabel'] as string"
               >
                 <template v-slot:option="scope">

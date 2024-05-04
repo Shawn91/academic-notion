@@ -1,4 +1,4 @@
-import { NPDInfo, PDToWorkMapping } from 'src/models/models';
+import { NPDInfo, PDToWorkMapping, SavedPDToWorkMapping } from 'src/models/models';
 import { BexEnvironment, detectBexEnvironment } from 'src/services/utils';
 import { is } from 'quasar';
 
@@ -37,7 +37,7 @@ export class UserDataLocalManager {
   /**
    * 获取一个 page/database 的 schema。如果 id=null，则返回所有本地保存过的 schemas
    */
-  static async getPDInfo(id: string | null = null): Promise<NPDInfo | null | Record<string, NPDInfo>> {
+  static async getPDInfo(id: string | null = null): Promise<NPDInfo | undefined | Record<string, NPDInfo>> {
     let pdInfos: Record<string, NPDInfo>; // {id: schema}
     if (detectBexEnvironment() === BexEnvironment.Background) {
       pdInfos = (await chrome.storage.local.get([StorageKey.PDInfo]))?.[StorageKey.PDInfo];
@@ -71,8 +71,9 @@ export class UserDataLocalManager {
 
   static async getPDToWorkMapping(
     PDId: string | null = null
-  ): Promise<Record<string, PDToWorkMapping> | PDToWorkMapping | null> {
-    let mappings: Record<string, PDToWorkMapping>;
+  ): Promise<{ [key: string]: SavedPDToWorkMapping } | SavedPDToWorkMapping | null> {
+    // key 是 database id。value 中包含了 mapping 本身，以及上次存储 mapping 到本地的时间
+    let mappings: { [key: string]: SavedPDToWorkMapping };
     if (detectBexEnvironment() === BexEnvironment.Background) {
       mappings = (await chrome.storage.local.get([StorageKey.PDToWorkMapping]))?.[StorageKey.PDToWorkMapping];
     } else {
@@ -82,21 +83,24 @@ export class UserDataLocalManager {
       });
     }
     if (PDId) {
-      return mappings[PDId];
+      return PDId in mappings ? mappings[PDId] : null;
     }
     return mappings;
   }
 
   /**
-   * 存储数据库字段与文献字段的对应关系。格式为 {Storage.PDToWorkMapping: {id1: mapping, id2: mapping}}
+   * 存储数据库字段与文献字段的对应关系。格式为
+   * {Storage.PDToWorkMapping: {id1: {'mapping': mapping, 'lastSaveTime': date}}}
    * 这里的 id 指的是数据库 id
    */
   static async savePDToWorkMapping(PDId: string, mapping: PDToWorkMapping) {
-    let existedMappings = (await UserDataLocalManager.getPDToWorkMapping()) as Record<string, PDToWorkMapping> | null;
+    let existedMappings = (await UserDataLocalManager.getPDToWorkMapping()) as {
+      [key: string]: SavedPDToWorkMapping;
+    } | null;
     if (!existedMappings) {
       existedMappings = {};
     }
-    existedMappings[PDId] = mapping;
+    existedMappings[PDId] = { mapping: mapping, lastSaveTime: new Date() };
     if (detectBexEnvironment() === BexEnvironment.Background) {
       await chrome.storage.local.set({ [StorageKey.PDToWorkMapping]: existedMappings });
     } else {

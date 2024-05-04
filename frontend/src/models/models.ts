@@ -28,6 +28,14 @@ export type PDToWorkMapping = {
 };
 
 /**
+ * 本地保存的某个数据库与文献的对应关系
+ */
+export type SavedPDToWorkMapping = {
+  mapping: PDToWorkMapping;
+  lastSaveTime?: Date;
+};
+
+/**
  * arxiv 网站对文献的主题分类
  */
 export const ARXIV_SUBJECTS = {
