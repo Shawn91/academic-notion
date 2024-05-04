@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { NPDInfo, PDToWorkMapping, SavedPDToWorkMapping, Work } from 'src/models/models';
 import WorkTable from 'components/WorkTable.vue';
-import { onMounted, ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
 import { is } from 'quasar';
@@ -84,7 +84,7 @@ async function handleUploadWorkButtonClicked() {
   }
 }
 
-onMounted(async () => {
+onBeforeMount(async () => {
   // 加载此前上传过文献的所有数据库的 schema
   const retrievedExistedPDInfo = (await UserDataLocalManager.getPDInfo()) as Record<string, NPDInfo> | null;
   if (retrievedExistedPDInfo) {

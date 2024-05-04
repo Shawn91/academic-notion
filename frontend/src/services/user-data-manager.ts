@@ -72,16 +72,27 @@ export class UserDataLocalManager {
   static async getPDToWorkMapping(
     PDId: string | null = null
   ): Promise<{ [key: string]: SavedPDToWorkMapping } | SavedPDToWorkMapping | null> {
-    // key 是 database id。value 中包含了 mapping 本身，以及上次存储 mapping 到本地的时间
-    let mappings: { [key: string]: SavedPDToWorkMapping };
+    // key 是 database id。value 中包含了 mapping 本身，以及上次存储 mapping 到本地的时间（时间被传换成了 string 格式）
+    let mappingLiterals: { [key: string]: { mapping: PDToWorkMapping; lastSaveTime: string } };
     if (detectBexEnvironment() === BexEnvironment.Background) {
-      mappings = (await chrome.storage.local.get([StorageKey.PDToWorkMapping]))?.[StorageKey.PDToWorkMapping];
+      mappingLiterals = (await chrome.storage.local.get([StorageKey.PDToWorkMapping]))?.[StorageKey.PDToWorkMapping];
     } else {
-      mappings = await chrome.runtime.sendMessage({
+      mappingLiterals = await chrome.runtime.sendMessage({
         message: 'get-storage',
         data: { key: StorageKey.PDToWorkMapping },
       });
     }
+    if (!mappingLiterals) {
+      return null;
+    }
+    // 将 mappingLiterals 中的 string 格式的 lastSaveTime 转换成 Date
+    const mappings: { [key: string]: SavedPDToWorkMapping } = {};
+    Object.keys(mappingLiterals).forEach((key) => {
+      mappings[key] = {
+        mapping: mappingLiterals[key]['mapping'],
+        lastSaveTime: new Date(mappingLiterals[key]['lastSaveTime']),
+      };
+    });
     if (PDId) {
       return PDId in mappings ? mappings[PDId] : null;
     }
