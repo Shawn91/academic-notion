@@ -7,7 +7,7 @@
   还能获取到关键字，所以需要一个 titleQuery 变量，每当搜索框内容变化时（即调用 filter 函数时），更新 titleQuery
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { NPDInfo, NProperty, PDToWorkMapping, SavedPDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
@@ -165,11 +165,24 @@ const selectedPDMapToWork = ref<PDToWorkMapping>(
   selectedPDId.value ? existedPDToWorkMappings.value[selectedPDId.value]['mapping'] : {}
 );
 
-
 const qSelectComponent = ref<QSelect | null>(null);
 let titleQuery = ''; // 用于搜索page或database的关键字
 
 const filteredPDOptions = ref(Object.values(existedPDInfo.value));
+
+watch(existedPDInfo, (newValue) => {
+  filteredPDOptions.value = Object.values(newValue);
+});
+
+watch(selectedPDId, (newValue) => {
+  selectedPDMapToWork.value =
+    newValue && newValue in existedPDToWorkMappings.value ? existedPDToWorkMappings.value[newValue]['mapping'] : {};
+});
+
+watch(existedPDToWorkMappings, (newValue) => {
+  selectedPDMapToWork.value =
+    selectedPDId.value && selectedPDId.value in newValue ? newValue[selectedPDId.value]['mapping'] : {};
+});
 
 function filterByTitle(val: string, update: (arg0: () => void) => void) {
   update(() => {

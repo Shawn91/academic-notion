@@ -29,7 +29,6 @@ def create_response(success: bool, data: Any = None, message: str = "", code: in
 @app.post("/upload-works", response_model=ApiResponse)
 def upload_works_endpoint(data: list = Body(...)):
     """data 是可以直接传递给 upload_works，符合 notion.create.pages 参数要求的上传数据"""
-    print(data)
     result = upload_works(data)
     # 只返回出错，插入失败的即可
     result = [r for r in result if isinstance(r, ErrorResult)]
