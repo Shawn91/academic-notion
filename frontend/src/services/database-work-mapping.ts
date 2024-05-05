@@ -1,4 +1,5 @@
 import { NProperty, PDToWorkMapping, Work } from 'src/models/models';
+import _ from 'lodash';
 
 function extractDate(work: Work): string | null {
   const year = work['publishInfo']?.['year'];
@@ -122,5 +123,31 @@ export function isCompatiblePDPropertyType(PDProperty: NProperty): boolean {
     PDProperty.type === 'select' ||
     PDProperty.type === 'title' ||
     PDProperty.type === 'url'
+  );
+}
+
+/**
+ * 用于比较一个 database 的新旧两个 schema 中的 properties 是否一致。
+ * 只考虑 type 和 property name 即可。且只考虑 isCompatiblePDPropertyType 返回 true 的 property
+ * @param properties1
+ * @param properties2
+ */
+export function areSameProperties(
+  properties1: { [p: string]: NProperty } | undefined,
+  properties2: { [p: string]: NProperty } | undefined
+): boolean {
+  if (!properties1 || !properties2) return false;
+  const compatibleProperties1 = Object.values(properties1).filter((p) => isCompatiblePDPropertyType(p));
+  const compatibleProperties2 = Object.values(properties2).filter((p) => isCompatiblePDPropertyType(p));
+  if (compatibleProperties1.length !== compatibleProperties2.length) return false;
+  return _.isEqual(
+    compatibleProperties1.reduce<{ [key: string]: string }>((acc, cur) => {
+      acc[cur.name] = cur.type;
+      return acc;
+    }, {}),
+    compatibleProperties2.reduce<{ [key: string]: string }>((acc, cur) => {
+      acc[cur.name] = cur.type;
+      return acc;
+    }, {})
   );
 }

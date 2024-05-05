@@ -5,8 +5,8 @@ import WorkTable from 'components/WorkTable.vue';
 import { onBeforeMount, ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
-import { is } from 'quasar';
 import _ from 'lodash';
+import { areSameProperties } from 'src/services/database-work-mapping';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
 const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文献的数据库的信息
@@ -68,8 +68,8 @@ async function handleUploadWorkButtonClicked() {
       data: { id: selectedPDId.value, PDType: 'database' },
     })
   ).data;
-  const selectedPDOldInfo = await UserDataLocalManager.getPDInfo(selectedPDId.value);
-  if (is.deepEqual(selectedPDLatestInfo.properties, selectedPDOldInfo?.properties)) {
+  const selectedPDOldInfo = (await UserDataLocalManager.getPDInfo(selectedPDId.value)) as NPDInfo;
+  if (areSameProperties(selectedPDLatestInfo.properties, selectedPDOldInfo?.properties)) {
     await UserDataLocalManager.savePDToWorkMapping(
       selectedPDId.value as string,
       existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
