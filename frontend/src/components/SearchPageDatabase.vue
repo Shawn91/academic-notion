@@ -288,8 +288,9 @@ function handleWorkPropertySelection(
         </thead>
         <tbody>
           <tr>
-            <td colspan="2" class="text-caption text-grey">
-              Some of your columns may not show here due to incompatible types.
+            <td colspan="2" class="text-caption text-grey" style="white-space: pre-wrap">
+              1. Some columns may not be displayed here due to incompatible types. <br />
+              2. The order of columns displayed here may differ from their order in your database.
             </td>
           </tr>
           <tr v-for="(property, propertyName) in selectedPDCompatibleProperties" :key="propertyName">
