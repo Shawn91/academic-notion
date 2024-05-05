@@ -14,8 +14,7 @@ const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文
 // 存储当前用户选中的 database column 到 work property 的对应关系。
 // key 是 database 的 column 列名
 const existedPDToWorkMappings = ref<{ [key: string]: SavedPDToWorkMapping }>({});
-
-let selectedWorks: Work[] = []; // 选中的文献
+const selectedWorks = ref<Work[]>([]); // 选中的文献
 let selectedPDId = ref<string | undefined>(undefined);
 // 当前 popup page 是分为了多页，当前展示第几页
 let pageNum = ref('page-1');
@@ -25,6 +24,10 @@ const showPDInfoOutdatedDialog = ref(false);
 window.addEventListener('message', (event) => {
   if (event.data.message === 'works') {
     works.value = event.data.data;
+    // 如果当前页面只有一篇论文，则自动勾选上。如果有多篇论文，则默认都不勾选
+    if (works.value.length === 1) {
+      selectedWorks.value = works.value;
+    }
   }
 });
 
@@ -32,18 +35,11 @@ function closePopup() {
   window.parent.postMessage({ message: 'close-popup' }, '*');
 }
 
-/**
- * 用户勾选或取消勾选了文献时触发
- */
-function handleWorksSelected(data: Work[]) {
-  selectedWorks = data;
-}
-
 async function uploadWorks() {
   if (!selectedPDId.value) return;
   await chrome.runtime.sendMessage({
     data: {
-      works: selectedWorks,
+      works: selectedWorks.value,
       pageDatabase: existedPDInfo.value[selectedPDId.value],
       databaseToWorkMapping: existedPDToWorkMappings.value[selectedPDId.value]['mapping'],
     },
@@ -118,7 +114,7 @@ onBeforeMount(async () => {
           v-if="works.length > 0"
           :works="works"
           :platform="works[0]?.['platform']"
-          @works-selected="handleWorksSelected"
+          v-model:selectedWorks="selectedWorks"
         ></work-table>
       </div>
       <div class="footer-button-group flex justify-end q-mt-sm">

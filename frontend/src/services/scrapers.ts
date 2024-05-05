@@ -1,4 +1,4 @@
-import { ARXIV_SUBJECTS, DigitalResource, Work, WorkType } from 'src/models/models';
+import { ARXIV_SUBJECTS, Work, WorkType } from 'src/models/models';
 import { CrossrefClient } from '@jamesgopsill/crossref-client';
 import wretch from 'wretch';
 import { extractDateNumsFromStr, mergeObjects } from 'src/services/utils';
@@ -103,12 +103,19 @@ export class ArxivScraper extends BaseScraper {
   }
 
   /**
-   * 获取当前搜索结果页面的所有文献 id
+   * 获取当前页面的所有文献 id。当前页面可能是文献搜索结果页，也可能是文献详情页
    */
   static getWorkIds(doc: Document): string[] {
-    return Array.from(doc.querySelectorAll('a'))
-      .filter((linkEle) => linkEle.href?.startsWith('https://arxiv.org/abs/'))
-      .map((linkEle) => this.extractIdFromUrl(linkEle.href) as string);
+    // 文献详情页
+    if (doc.documentURI?.startsWith('https://arxiv.org/abs/')) {
+      return [this.extractIdFromUrl(doc.documentURI) as string];
+    } else if (doc.documentURI?.startsWith('https://arxiv.org/search/')) {
+      // 搜索结果页
+      return Array.from(doc.querySelectorAll('a'))
+        .filter((linkEle) => linkEle.href?.startsWith('https://arxiv.org/abs/'))
+        .map((linkEle) => this.extractIdFromUrl(linkEle.href) as string);
+    }
+    return [];
   }
 
   /**

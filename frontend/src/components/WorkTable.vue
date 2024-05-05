@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Platform, Work } from 'src/models/models';
-import { nextTick, ref } from 'vue';
 
 const COLUMNS = [
   {
@@ -32,16 +31,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits(['works-selected']);
-
-const selectedWorks = ref<Work[]>([]);
-
-function handleSelection() {
-  // 如果不使用 nextTick，会在 selectedWorks 还没更新时就 emit，导致 emit 的是上一个状态的值
-  nextTick(() => {
-    emit('works-selected', selectedWorks.value);
-  });
-}
+// 如果当前页面只有一篇论文，则自动勾选上。如果有多篇论文，则默认都不勾选
+const selectedWorks = defineModel<Work[]>('selectedWorks', { default: [] });
 </script>
 
 <template>
@@ -58,7 +49,6 @@ function handleSelection() {
         bordered
         wrap-cells
         separator="cell"
-        @selection="handleSelection"
       ></q-table>
     </div>
   </div>
