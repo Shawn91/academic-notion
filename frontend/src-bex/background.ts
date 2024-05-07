@@ -1,47 +1,46 @@
 import { bexBackground } from 'quasar/wrappers';
 import { ArxivScraper } from 'src/services/scrapers';
 import { fetchPageDatabaseByID, searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
+import { Work } from 'src/models/models';
 
-/**
- * This function will be injected into active tab.
- * Therefore, it has access to 'document' and 'window' objects.
- */
-function InjectPopup() {
-  // 多次打开弹窗，只保留最新的一个
-  if (document.getElementById('academic-notion-popup')) {
-    document.body.removeChild(document.getElementById('academic-notion-popup') as HTMLIFrameElement);
-  }
-  const popup = document.createElement('iframe');
-  popup.src = chrome.runtime.getURL('www/index.html#popup');
-  const popupWidth = 70; // 页面宽度的百分比
-  const popupHeight = 80; // 页面可视高度的百分比
-  popup.style.width = `${popupWidth}vw`;
-  popup.style.height = `${popupHeight}vh`;
-  popup.style.background = '#fff';
-  popup.style.position = 'fixed';
-  popup.style.left = `${(100 - popupWidth) / 2}vw`;
-  popup.style.top = `${(100 - popupHeight) / 2}vh`;
-  popup.style.boxShadow = '0 0 32px rgba(0, 0, 0, 0.5)';
-  popup.style.border = 'none';
-  popup.style.zIndex = '9999';
-  popup.id = 'academic-notion-popup';
-  document.body.appendChild(popup);
-  return popup;
-}
-
+// 流程：
+// 1. 当用户正在访问 arxiv 或其他文献网站时，点击了插件 icon。打开新窗口
+// 2. 等待窗口内的页面彻底加载完毕，然后通知文献网站的 content script，令其开始获取文献列表
+// 3. 文献网站的 content script 获取当前页面的文献，然后将文献列表发送给 background script
+// 4. background script 将接收到的文献列表发送给新窗口
 chrome.action.onClicked.addListener((tab) => {
-  chrome.scripting
-    .executeScript({
-      // @ts-ignore: 'tabId' raises an error warning in PyCharm while it actually works fine.
-      target: { tabId: tab.id },
-      func: InjectPopup,
-    })
-    .then(() => {
-      // tell the active tab that the popup has been opened
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id as number, { message: 'popup-open' });
+  let workTabId: number | undefined; // 文献网站所在 tab 的 id
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    workTabId = tabs[0].id;
+    if (!workTabId) return;
+    chrome.windows
+      .create({
+        url: chrome.runtime.getURL('www/index.html#popup'),
+        type: 'popup',
+        width: 800,
+        height: 600,
+      })
+      .then((newWindow) => {
+        // 打开新窗口后要监听窗口是否加载内容完毕。加载完毕后再去获取文献列表
+        chrome.runtime.onMessage.addListener(function listener(request, sender, sendResponse) {
+          if (request.message === 'popup-mounted') {
+            chrome.runtime.onMessage.removeListener(listener); // 新窗口的网页已经加载完毕，可以移除这个监听了
+            // tell the tab that the popup has been opened
+            chrome.tabs
+              .sendMessage(workTabId as number, { message: 'scrape-works' })
+              .then((res: Work[] | undefined) => {
+                if (res) {
+                  console.log('newWindow id', newWindow.tabs?.[0].id);
+                  chrome.tabs.sendMessage(newWindow.tabs?.[0].id as number, {
+                    message: 'works',
+                    data: res,
+                  });
+                }
+              });
+          }
+        });
       });
-    });
+  });
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

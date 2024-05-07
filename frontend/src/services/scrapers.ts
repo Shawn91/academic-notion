@@ -5,21 +5,16 @@ import { extractDateNumsFromStr, mergeObjects } from 'src/services/utils';
 
 const crossrefClient = new CrossrefClient();
 
-class BaseScraper {
-  /**
-   * 给定数字，返回字符串形式，如果小于 10，则前面补 0。主要用于将日期和月份转换
-   */
-  static intToStrWithZero(n: number | undefined): string | undefined {
-    if (n === undefined) return undefined;
-    if (n < 10) return `0${n}`;
-    return `${n}`;
-  }
+function intToStrWithZero(n: number | undefined): string | undefined {
+  if (n === undefined) return undefined;
+  if (n < 10) return `0${n}`;
+  return `${n}`;
 }
 
 /**
  * 给定 DOI，从 crossref.org 的 api 中获取论文信息
  */
-export class DOIScraper extends BaseScraper {
+export class DOIScraper {
   static async fetchWorkByDOI(doi: string): Promise<Work | null> {
     const res = await crossrefClient.work(doi);
     if (!(res.ok && res.status == 200)) return null;
@@ -41,8 +36,8 @@ export class DOIScraper extends BaseScraper {
         volume: resJson.volume,
         pages: resJson.page,
         year: resJson.issued?.dateParts?.at(0)?.at(0)?.toString(),
-        month: DOIScraper.intToStrWithZero(resJson.issued?.dateParts?.at(0)?.at(1)),
-        day: DOIScraper.intToStrWithZero(resJson.issued?.dateParts?.at(0)?.at(2)),
+        month: intToStrWithZero(resJson.issued?.dateParts?.at(0)?.at(1)),
+        day: intToStrWithZero(resJson.issued?.dateParts?.at(0)?.at(2)),
       },
       authors: resJson.author?.map((author) => ({
         familyName: author.family,
@@ -61,15 +56,39 @@ export class DOIScraper extends BaseScraper {
   }
 }
 
+abstract class Scraper {
+  /**
+   * 判断是否是当前 scraper 所支持的 url
+   */
+  abstract matchUrl(url: string): boolean;
+
+  /**
+   * scraper 入口函数
+   */
+  abstract parseDoc(doc: Document): Promise<Work[]>;
+}
+
 /**
  * 获取 arxiv 网站搜索结果页的论文信息
  */
-export class ArxivScraper extends BaseScraper {
+export class ArxivScraper extends Scraper {
+  matchUrl(url: string): boolean {
+    return url.startsWith('https://arxiv.org/abs/') || url.startsWith('https://arxiv.org/search/');
+  }
+
+  async parseDoc(doc: Document): Promise<Work[]> {
+    const workIds = this.getWorkIds(doc);
+    // 向 background script 发送搜索结果页所有文献的 id，以便后端可以获取文献的详细信息
+    const res = await chrome.runtime.sendMessage({ data: workIds, message: 'fetch-arxiv-works-info' });
+    // 将获取到的 xml 格式文献信息解析后，发送给 popup
+    return this.parseWorks(res.data);
+  }
+
   /**
    * id 有两种格式：hep-th/9901001 或 0704.0001v1。
    * 对应的论文详情页 link 为 https://arxiv.org/abs/hep-th/9901001 或 https://arxiv.org/abs/0704.0001v1
    */
-  static extractIdFromUrl(url: string): string | null {
+  extractIdFromUrl(url: string): string | null {
     // 定义正则表达式，匹配 https://arxiv.org/abs/ 之后的所有字符
     const regex = /https:\/\/arxiv\.org\/abs\/(.+)/;
     const matches = url.match(regex);
@@ -86,7 +105,7 @@ export class ArxivScraper extends BaseScraper {
    * 有可能是 “J.Hasty Results 1 (2008) 1-9; Erratum: J.Hasty Results 2 (2008) 1-2” 这样用 ; 分隔了多个期刊或勘误信息
    * 取第一个再解析即可
    */
-  static extractPublishInfoFromJournalRef(journalRef: string): {
+  extractPublishInfoFromJournalRef(journalRef: string): {
     containerTitle?: string;
     volume?: string;
     yearNum?: number;
@@ -105,7 +124,7 @@ export class ArxivScraper extends BaseScraper {
   /**
    * 获取当前页面的所有文献 id。当前页面可能是文献搜索结果页，也可能是文献详情页
    */
-  static getWorkIds(doc: Document): string[] {
+  getWorkIds(doc: Document): string[] {
     // 文献详情页
     if (doc.documentURI?.startsWith('https://arxiv.org/abs/')) {
       return [this.extractIdFromUrl(doc.documentURI) as string];
@@ -135,7 +154,7 @@ export class ArxivScraper extends BaseScraper {
    * 输入 arxiv api 返回的多个论文的信息组成的 xml，解析成 Work 对象
    * @param rawWorksXML xml 格式的字符串。arxiv api 返回值
    */
-  static parseWorks(rawWorksXML: string): Work[] {
+  parseWorks(rawWorksXML: string): Work[] {
     const parser = new DOMParser();
     const doc = parser.parseFromString(rawWorksXML, 'text/xml');
     const workElements = doc.getElementsByTagName('entry');
@@ -236,4 +255,128 @@ export class ArxivScraper extends BaseScraper {
       } as Work;
     });
   }
+}
+
+export class GoogleScholarScraper extends Scraper {
+  matchUrl(url: string): boolean {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname.startsWith('scholar.google.com') && parsedUrl.pathname === '/scholar';
+  }
+
+  /**
+   * 删除一个字符串开头和结尾的 ...
+   */
+  _removeDots(s: string): string {
+    return s
+      .replace(/ ?\.\.\.$/, '')
+      .replace(/^ \.\.\./, '')
+      .trim();
+  }
+
+  _extractCitationNum(citationEle: Element | null, work: Work) {
+    if (citationEle && citationEle.textContent) {
+      const match = citationEle.textContent.match(/[0-9]+/);
+      if (match && match.length > 0) {
+        work['referencedByCount'] = parseInt(match[0]);
+      }
+    }
+  }
+
+  _extractAuthorsAndPublishInfo(publishInfoEle: Element | null, work: Work) {
+    if (publishInfoEle && publishInfoEle.textContent) {
+      // publisherWebsiteStr 内容可能有多种情况，可能是发表论文的期刊/出版商的网站，也可能是搜集了这篇论文的某个数据库网站
+      const [authorStr, journalAndYearStr, publisherWebsiteStr] = publishInfoEle.textContent.split(' - ');
+      work['authors'] = authorStr.split(',').map((author) => {
+        return { fullName: this._removeDots(author) };
+      });
+      // 有逗号，说明 journal 和年份信息都有
+      if (journalAndYearStr.includes(',')) {
+        const lastCommaIndex = journalAndYearStr.lastIndexOf(','); // journal 名字中也可能有逗号，所以需要找到最后一个逗号的位置
+        const journalStr = journalAndYearStr.substring(0, lastCommaIndex).trim();
+        const yearStr = journalAndYearStr.substring(lastCommaIndex + 1).trim();
+        work['publishInfo'] = {
+          containerTitle: this._removeDots(journalStr),
+          year: yearStr.trim(),
+        };
+      } else {
+        // 没有逗号，目前来看是只有年份信息，但是不确定会不会可能只有 journal
+        work['publishInfo'] = {
+          year: journalAndYearStr.trim(),
+        };
+      }
+    }
+  }
+
+  _extractDigitalResources(digitalResourceEles: NodeListOf<Element>, work: Work) {
+    if (digitalResourceEles.length > 0) {
+      work['digitalResources'] = [];
+      digitalResourceEles.forEach((digitalResourceEle) => {
+        const urlText = digitalResourceEle.textContent;
+        const url = digitalResourceEle.getAttribute('href');
+        if (!urlText || !url) return;
+        // 对于 [PDF] nih.gov 这样的文本，可以判断当前是链接是 pdf 的下载链接
+        if (urlText.startsWith('[PDF]') || url.endsWith('.pdf')) {
+          work['digitalResources']?.push({
+            resourceLink: url,
+            contentType: 'application/pdf',
+          });
+        } else if (urlText.startsWith('[HTML]')) {
+          // 以 [HTML] 开头的，可以判断当前是链接是论文详情页，但是详情页中有正文
+          work['digitalResources']?.push({
+            resourceLink: url,
+            contentType: 'text/html',
+          });
+        } else if (urlText.startsWith('[')) {
+          // 此时，可能是其他格式文本，如 doc 等
+          work['digitalResources']?.push({
+            resourceLink: url,
+            contentType: 'application/octet-stream',
+          });
+        } else {
+          // 其他情况下，视为是论文详情页。此时标题的 link 大概率才是下载链接
+          if (!work['url']) work['url'] = url;
+        }
+      });
+    }
+  }
+
+  parseDoc(doc: Document): Promise<Work[]> {
+    const works: Work[] = [];
+    // 'gs_r' 这个 class 是所有搜索结果的 div container 的 class
+    doc.querySelectorAll('.gs_r').forEach((workEle) => {
+      const titleEle = workEle.querySelector('.gs_rt a');
+      // 文献标题的 url。点击后可能是文献详情页，也可能直接就是文献本身下载地址
+      const urlELe = workEle.querySelector('.gs_rt a');
+      const citationEle = workEle.querySelector('.gs_ri .gs_fl a[href^="/scholar?cites="]');
+      // 包含了作者、年份、期刊、出版商网站
+      const publishInfoEle = workEle.querySelector('.gs_a');
+      // 大部分情况下，digitalResourcesEles 没有元素，说明没有下载链接。少部分情况，可能有一个下载链接。
+      // 更少情况下，可能有一个下载链接和一个详情页链接
+      const digitalResourceEles = workEle.querySelectorAll('.gs_or_ggsm a');
+      const work: Work = {};
+      if (titleEle && titleEle.textContent) {
+        work['title'] = titleEle.textContent as string;
+      } else {
+        // 没有标题时，直接返回，不再继续解析
+        return;
+      }
+      if (urlELe) {
+        work['url'] = urlELe.getAttribute('href') as string;
+      }
+      this._extractCitationNum(citationEle, work);
+      this._extractAuthorsAndPublishInfo(publishInfoEle, work);
+      this._extractDigitalResources(digitalResourceEles, work);
+      works.push(work);
+    });
+    return Promise.resolve(works); // 包裹在 promise 里是为了和其他 scraper 保持一致
+  }
+}
+
+export async function scrapeWorks(doc: Document): Promise<Work[] | null> {
+  for (const scraper of [new ArxivScraper(), new GoogleScholarScraper()]) {
+    if (scraper.matchUrl(doc.location.href)) {
+      return await scraper.parseDoc(doc);
+    }
+  }
+  return null;
 }

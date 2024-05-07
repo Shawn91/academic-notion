@@ -1,20 +1,14 @@
-import { ArxivScraper } from 'src/services/scrapers';
+import { scrapeWorks } from 'src/services/scrapers';
 import { bexContent } from 'quasar/wrappers';
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.message == 'popup-open') {
-    const workIds = ArxivScraper.getWorkIds(document);
-    // 向 background script 发送搜索结果页所有文献的 id，以便后端可以获取文献的详细信息
-    chrome.runtime.sendMessage({ data: workIds, message: 'fetch-arxiv-works-info' }, (res) => {
-      // 将获取到的 xml 格式文献信息解析后，发送给 popup
-      const popup = document.getElementById('academic-notion-popup') as HTMLIFrameElement;
-      if (popup) {
-        popup.contentWindow?.postMessage(
-          { data: ArxivScraper.parseWorks(res.data), message: 'works' },
-          chrome.runtime.getURL('www/index.html#popup')
-        );
+  if (request.message === 'scrape-works') {
+    scrapeWorks(document).then((works) => {
+      if (works) {
+        sendResponse(works);
+      } else {
+        sendResponse('no works found');
       }
-      sendResponse();
     });
   }
   return true;

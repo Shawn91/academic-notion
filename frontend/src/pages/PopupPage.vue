@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { NPDInfo, PDToWorkMapping, SavedPDToWorkMapping, Work } from 'src/models/models';
 import WorkTable from 'components/WorkTable.vue';
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
 import _ from 'lodash';
@@ -21,13 +21,14 @@ let pageNum = ref('page-1');
 
 const showPDInfoOutdatedDialog = ref(false);
 
-window.addEventListener('message', (event) => {
-  if (event.data.message === 'works') {
-    works.value = event.data.data;
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.message === 'works') {
+    works.value = request.data;
     // 如果当前页面只有一篇论文，则自动勾选上。如果有多篇论文，则默认都不勾选
     if (works.value.length === 1) {
       selectedWorks.value = works.value;
     }
+    sendResponse('works received inside popup');
   }
 });
 
@@ -79,6 +80,10 @@ async function handleUploadWorkButtonClicked() {
     await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
   }
 }
+
+onMounted(() => {
+  chrome.runtime.sendMessage({ message: 'popup-mounted' });
+});
 
 onBeforeMount(async () => {
   // 加载此前上传过文献的所有数据库的 schema
