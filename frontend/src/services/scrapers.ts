@@ -358,6 +358,7 @@ export class GoogleScholarScraper extends Scraper {
       this._extractCitationNum(citationEle, work);
       this._extractAuthorsAndPublishInfo(publishInfoEle, work);
       this._extractDigitalResources(digitalResourceEles, work);
+      work['platform'] = 'GoogleScholar';
       works.push(work);
     });
     return Promise.resolve(works); // 包裹在 promise 里是为了和其他 scraper 保持一致

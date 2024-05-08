@@ -232,7 +232,7 @@ export interface components {
      * @description 从哪个平台获取到的文献。不是该文献的来源，而是从哪个平台获取到的
      * @enum {string}
      */
-    Platform: "arXiv";
+    Platform: "arXiv" | "GoogleScholar";
     Work: {
       title?: string;
       /** @description 副标题 */

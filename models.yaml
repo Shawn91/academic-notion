@@ -452,8 +452,7 @@ components:
     Platform:
       type: string
       description: 从哪个平台获取到的文献。不是该文献的来源，而是从哪个平台获取到的
-      enum:
-        - arXiv
+      enum: [ arXiv, GoogleScholar ]
 
     Work:
       type: object

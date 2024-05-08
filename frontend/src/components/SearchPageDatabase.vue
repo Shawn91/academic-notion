@@ -8,7 +8,14 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { NPDInfo, NProperty, PDToWorkMapping, SavedPDToWorkMapping, WorkPropertyKeys } from 'src/models/models';
+import {
+  NPDInfo,
+  NProperty,
+  PDToWorkMapping,
+  Platform,
+  SavedPDToWorkMapping,
+  WorkPropertyKeys,
+} from 'src/models/models';
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
 import { isCompatiblePDPropertyType } from 'src/services/database-work-mapping';
@@ -140,6 +147,9 @@ const existedPDInfo = defineModel<{ [p: string]: NPDInfo }>('existedPDInfo', { d
 // 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPDId
 const selectedPDId = defineModel<string | undefined>('selectedPDId', { default: undefined });
 const selectedPDInfo = computed(() => (selectedPDId.value ? existedPDInfo.value[selectedPDId.value] : undefined));
+const props = defineProps<{
+  platform: Platform | undefined;
+}>();
 
 // 选中的数据库中，哪些列是可能有对应的文献属性的
 const selectedPDCompatibleProperties = computed(() => {
@@ -291,6 +301,10 @@ function handleWorkPropertySelection(
             <td colspan="2" class="text-caption text-grey" style="white-space: pre-wrap">
               1. Some columns may not be displayed here due to incompatible types. <br />
               2. The order of columns displayed here may differ from their order in your database.
+              <span v-show="props.platform === 'GoogleScholar'"
+                ><br />
+                3. The author list and the journal name may be incomplete for some papers from Google Scholar.</span
+              >
             </td>
           </tr>
           <tr v-for="(property, propertyName) in selectedPDCompatibleProperties" :key="propertyName">

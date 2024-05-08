@@ -134,6 +134,7 @@ onBeforeMount(async () => {
         v-model:existedPDInfo="existedPDInfo"
         v-model:selectedPDId="selectedPDId"
         v-model:existedPDToWorkMappings="existedPDToWorkMappings"
+        :platform="works[0]?.['platform']"
       ></search-page-database>
     </div>
     <div class="footer-button-group flex justify-end q-mt-sm">

@@ -3,6 +3,44 @@ import { ArxivScraper } from 'src/services/scrapers';
 import { fetchPageDatabaseByID, searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
 import { Work } from 'src/models/models';
 
+function createNewWindow(): Promise<chrome.windows.Window> {
+  return new Promise((resolve, reject) => {
+    const windowWidth = 1000;
+    const windowHeight = 700;
+    chrome.windows.getCurrent({}, (currentWindow) => {
+      if (
+        currentWindow.left !== undefined &&
+        currentWindow.top !== undefined &&
+        currentWindow.width !== undefined &&
+        currentWindow.height !== undefined
+      ) {
+        // 通过计算，让新弹出的窗口位于当前窗口中间
+        const left = Math.round(currentWindow.left + currentWindow.width / 2 - windowWidth / 2);
+        const top = Math.round(currentWindow.top + currentWindow.height / 2 - windowHeight / 2);
+
+        // Create the new window at the calculated position
+        chrome.windows.create(
+          {
+            url: chrome.runtime.getURL('www/index.html#popup'),
+            type: 'popup',
+            width: windowWidth,
+            height: windowHeight,
+            left: left,
+            top: top,
+          },
+          (newWindow) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else {
+              resolve(newWindow as chrome.windows.Window);
+            }
+          }
+        );
+      }
+    });
+  });
+}
+
 // 流程：
 // 1. 当用户正在访问 arxiv 或其他文献网站时，点击了插件 icon。打开新窗口
 // 2. 等待窗口内的页面彻底加载完毕，然后通知文献网站的 content script，令其开始获取文献列表
@@ -13,32 +51,23 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     workTabId = tabs[0].id;
     if (!workTabId) return;
-    chrome.windows
-      .create({
-        url: chrome.runtime.getURL('www/index.html#popup'),
-        type: 'popup',
-        width: 800,
-        height: 600,
-      })
-      .then((newWindow) => {
-        // 打开新窗口后要监听窗口是否加载内容完毕。加载完毕后再去获取文献列表
-        chrome.runtime.onMessage.addListener(function listener(request, sender, sendResponse) {
-          if (request.message === 'popup-mounted') {
-            chrome.runtime.onMessage.removeListener(listener); // 新窗口的网页已经加载完毕，可以移除这个监听了
-            // tell the tab that the popup has been opened
-            chrome.tabs
-              .sendMessage(workTabId as number, { message: 'scrape-works' })
-              .then((res: Work[] | undefined) => {
-                if (res) {
-                  chrome.tabs.sendMessage(newWindow.tabs?.[0].id as number, {
-                    message: 'works',
-                    data: res,
-                  });
-                }
+    createNewWindow().then((newWindow) => {
+      // 打开新窗口后要监听窗口是否加载内容完毕。加载完毕后再去获取文献列表
+      chrome.runtime.onMessage.addListener(function listener(request, sender, sendResponse) {
+        if (request.message === 'popup-mounted') {
+          chrome.runtime.onMessage.removeListener(listener); // 新窗口的网页已经加载完毕，可以移除这个监听了
+          // tell the tab that the popup has been opened
+          chrome.tabs.sendMessage(workTabId as number, { message: 'scrape-works' }).then((res: Work[] | undefined) => {
+            if (res) {
+              chrome.tabs.sendMessage(newWindow.tabs?.[0].id as number, {
+                message: 'works',
+                data: res,
               });
-          }
-        });
+            }
+          });
+        }
       });
+    });
   });
 });
 
