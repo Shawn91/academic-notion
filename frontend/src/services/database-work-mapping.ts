@@ -36,7 +36,8 @@ function generatePDItemValue(
     | {
         name: string;
         url: string;
-      }[]
+      }[],
+  work: Work
 ) {
   const t = PDProperty['type'];
   if (t === 'rich_text' || t === 'title') {
@@ -57,7 +58,7 @@ function generatePDItemValue(
     // 这里使用了 "external" 字段，表示文件并非 notion 内的链接，而是外部链接
     // 如果想要改为 notion 内的文件，将 "external" 改为 "file"
     // 无论是notion内的链接，还是外部链接，插入后，在数据库中都是以超链接的形式展现，而非附件
-    return { [t]: [{ name: workPropertyValue, external: { url: workPropertyValue } }] };
+    return { [t]: [{ name: work['title']?.slice(0, 100), external: { url: workPropertyValue } }] };
   }
   return null;
 }
@@ -71,7 +72,7 @@ export function transformFromWorkToPDItem(mapping: PDToWorkMapping, work: Work) 
     if (workPropertyName === 'date') {
       const date = extractDate(work);
       if (date) {
-        PDItemValue = generatePDItemValue(mapping[PDPropertyName]?.['PDProperty'] as NProperty, date);
+        PDItemValue = generatePDItemValue(mapping[PDPropertyName]?.['PDProperty'] as NProperty, date, work);
       }
     } else if (
       workPropertyName === 'publisher' ||
@@ -84,7 +85,8 @@ export function transformFromWorkToPDItem(mapping: PDToWorkMapping, work: Work) 
       if (work['publishInfo']?.[workPropertyName]) {
         PDItemValue = generatePDItemValue(
           mapping[PDPropertyName]?.['PDProperty'] as NProperty,
-          work['publishInfo'][workPropertyName] as string
+          work['publishInfo'][workPropertyName] as string,
+          work
         );
       }
     } else if (
@@ -95,12 +97,14 @@ export function transformFromWorkToPDItem(mapping: PDToWorkMapping, work: Work) 
     ) {
       PDItemValue = generatePDItemValue(
         mapping[PDPropertyName]?.['PDProperty'] as NProperty,
-        work['digitalResources']?.[0][workPropertyName] as string
+        work['digitalResources']?.[0][workPropertyName] as string,
+        work
       );
     } else if (workPropertyName in work) {
       PDItemValue = generatePDItemValue(
         mapping[PDPropertyName]?.['PDProperty'] as NProperty,
-        work[workPropertyName as keyof Work] as string
+        work[workPropertyName as keyof Work] as string,
+        work
       );
     }
     if (PDItemValue) {

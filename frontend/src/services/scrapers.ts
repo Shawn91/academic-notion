@@ -72,6 +72,19 @@ abstract class Scraper {
  * 获取 arxiv 网站搜索结果页的论文信息
  */
 export class ArxivScraper extends Scraper {
+  /**
+   * 获取所有搜索结果中的文献相关信息
+   * 这里后用 arxiv api 发送请求，根据id获取其他具体信息，而非直接从 html 中获取。
+   * 这样可以尽可能避免 html 样式变化导致爬取内容失败
+   *
+   * @returns {Promise<string>} xml 格式的字符串
+   */
+  static async fetchRawWorksInfo(ids: string[]): Promise<string> {
+    return await wretch(`http://export.arxiv.org/api/query?max_results=${ids.length}&id_list=${ids.join(',')}`)
+      .get()
+      .text();
+  }
+
   matchUrl(url: string): boolean {
     return url.startsWith('https://arxiv.org/abs/') || url.startsWith('https://arxiv.org/search/');
   }
@@ -135,19 +148,6 @@ export class ArxivScraper extends Scraper {
         .map((linkEle) => this.extractIdFromUrl(linkEle.href) as string);
     }
     return [];
-  }
-
-  /**
-   * 获取所有搜索结果中的文献相关信息
-   * 这里后用 arxiv api 发送请求，根据id获取其他具体信息，而非直接从 html 中获取。
-   * 这样可以尽可能避免 html 样式变化导致爬取内容失败
-   *
-   * @returns {Promise<string>} xml 格式的字符串
-   */
-  static async fetchRawWorksInfo(ids: string[]): Promise<string> {
-    return await wretch(`http://export.arxiv.org/api/query?max_results=${ids.length}&id_list=${ids.join(',')}`)
-      .get()
-      .text();
   }
 
   /**
@@ -263,16 +263,6 @@ export class GoogleScholarScraper extends Scraper {
     return parsedUrl.hostname.startsWith('scholar.google.com') && parsedUrl.pathname === '/scholar';
   }
 
-  /**
-   * 删除一个字符串开头和结尾的 ...
-   */
-  _removeDots(s: string): string {
-    return s
-      .replace(/ ?\.\.\.$/, '')
-      .replace(/^ \.\.\./, '')
-      .trim();
-  }
-
   _extractCitationNum(citationEle: Element | null, work: Work) {
     if (citationEle && citationEle.textContent) {
       const match = citationEle.textContent.match(/[0-9]+/);
@@ -285,9 +275,11 @@ export class GoogleScholarScraper extends Scraper {
   _extractAuthorsAndPublishInfo(publishInfoEle: Element | null, work: Work) {
     if (publishInfoEle && publishInfoEle.textContent) {
       // publisherWebsiteStr 内容可能有多种情况，可能是发表论文的期刊/出版商的网站，也可能是搜集了这篇论文的某个数据库网站
-      const [authorStr, journalAndYearStr, publisherWebsiteStr] = publishInfoEle.textContent.split(' - ');
+      const [authorStr, journalAndYearStr, publisherWebsiteStr] = publishInfoEle.textContent
+        .split('-')
+        .map((s) => s.trim());
       work['authors'] = authorStr.split(',').map((author) => {
-        return { fullName: this._removeDots(author) };
+        return { fullName: author };
       });
       // 有逗号，说明 journal 和年份信息都有
       if (journalAndYearStr.includes(',')) {
@@ -295,7 +287,7 @@ export class GoogleScholarScraper extends Scraper {
         const journalStr = journalAndYearStr.substring(0, lastCommaIndex).trim();
         const yearStr = journalAndYearStr.substring(lastCommaIndex + 1).trim();
         work['publishInfo'] = {
-          containerTitle: this._removeDots(journalStr),
+          containerTitle: journalStr,
           year: yearStr.trim(),
         };
       } else {

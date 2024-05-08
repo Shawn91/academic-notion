@@ -30,7 +30,6 @@ chrome.action.onClicked.addListener((tab) => {
               .sendMessage(workTabId as number, { message: 'scrape-works' })
               .then((res: Work[] | undefined) => {
                 if (res) {
-                  console.log('newWindow id', newWindow.tabs?.[0].id);
                   chrome.tabs.sendMessage(newWindow.tabs?.[0].id as number, {
                     message: 'works',
                     data: res,
