@@ -1,16 +1,39 @@
 /**
- * 从 2007-02-27 00:00:00 格式的字符串中提取出年月日
+ * 从任意格式的字符串中提取出年月日。目前支持的格式
+ * 2014-07-02 年-月-日
+ * 6 May 2024 日 英文月 年
+ * May 2014 英文月 年
  */
 export function extractDateNumsFromStr(str: string): { year: string; month: string; day: string } | undefined {
-  const date = new Date(str);
-  if (isNaN(date.getTime())) {
-    return undefined;
+  const monthWords = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  for (const datePat of ['\\d{4}-\\d{2}-\\d{2}', `(\\d{1,2} )?(${monthWords.join('|')}) \\d{4}`]) {
+    const regexp = new RegExp(datePat, 'i');
+    const dateMatch = regexp.exec(str);
+    if (!dateMatch) continue;
+    const date = new Date(dateMatch[0]);
+    if (isNaN(date.getTime())) {
+      continue;
+    }
+    return {
+      year: date.getFullYear().toString(),
+      month: date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : (date.getMonth() + 1).toString(),
+      day: date.getDate() < 10 ? `0${date.getDate()}` : date.getDate().toString(),
+    };
   }
-  return {
-    year: date.getFullYear().toString(),
-    month: date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : (date.getMonth() + 1).toString(),
-    day: date.getDate() < 10 ? `0${date.getDate()}` : date.getDate().toString(),
-  };
+  return undefined;
 }
 
 function isNullOrUndefined(value: unknown): boolean {
@@ -85,4 +108,55 @@ export function detectBexEnvironment(): BexEnvironment {
   } catch (e) {
     return BexEnvironment.Background;
   }
+}
+
+/**
+ * 用于等待某个元素 X 被加载到 DOM 树中
+ * @param parentNode X 被加载到 DOM 树中的父元素
+ * @param selectors 多个 selection queries，其中任意一个被检索到视为 X 插入成功
+ * @param timeout 最大等待时间（毫秒）
+ */
+export function waitForElement(parentNode: Element, selectors: string[], timeout = 3000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Check if the element already exists
+    if (selectors.some((selector) => parentNode.querySelector(selector))) {
+      resolve();
+      return;
+    }
+    const observer = new MutationObserver((mutations, obs) => {
+      if (selectors.some((selector) => parentNode.querySelector(selector))) {
+        clearTimeout(timeoutId); // Clear the timeout if the element is found
+        obs.disconnect();
+        resolve();
+      }
+    });
+
+    observer.observe(parentNode, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Set up a timeout to stop waiting after a specified time
+    const timeoutId = setTimeout(() => {
+      observer.disconnect();
+      reject(new Error(`Timeout: Failed to find element within ${timeout}ms`));
+    }, timeout);
+  });
+}
+
+/**
+ * 从任意字符串中匹配类似 "Volume 101" 这样的文本，返回 101
+ */
+export function extractVolume(str: string): string | null {
+  const match = str.match(/[Vv]olume\s+(\d+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * 从任意字符串中匹配类似 "Pages 101-102" 这样的文本，返回 101
+ * @param str
+ */
+export function extractPages(str: string): string | null {
+  const match = str.match(/Pages\s+(\d+-\d+)/);
+  return match ? match[1] : null;
 }
