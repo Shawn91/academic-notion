@@ -1,7 +1,7 @@
-import { ARXIV_SUBJECTS, Work, WorkType } from 'src/models/models';
+import { ARXIV_SUBJECTS, Author, PublishInfo, Work, WorkType } from 'src/models/models';
 import { CrossrefClient } from '@jamesgopsill/crossref-client';
 import wretch from 'wretch';
-import { extractDateNumsFromStr, mergeObjects } from 'src/services/utils';
+import { extractDateNumsFromStr, extractPages, extractVolume, mergeObjects, waitForElement } from 'src/services/utils';
 
 const crossrefClient = new CrossrefClient();
 
@@ -365,8 +365,200 @@ export class GoogleScholarScraper extends Scraper {
   }
 }
 
+export class ScienceDirectScraper extends Scraper {
+  SEARCH_URL = 'https://www.sciencedirect.com/search?'; // 搜索结果页 url
+  WORK_URL = 'https://www.sciencedirect.com/science/article/'; // 文献详情页 url
+
+  /**
+   * @param searchResult 当前是搜索结果页还是文献详情页
+   */
+  extractPublishInfo(parentElement: Element, work: Work, searchResult = true) {
+    if (searchResult) {
+      // journalAndDateEle 文本是 "Journal of Nuclear Materials, July 2023"。其中期刊和日期分别属于一个 span
+      // 中间的逗号是用 css 实现的，而非 html 里的
+      const journalAndDateEle = parentElement.querySelector('.srctitle-date-fields');
+      if (!journalAndDateEle) return;
+      const journalAndDateSpans = journalAndDateEle.querySelectorAll(':scope > span');
+      if (journalAndDateSpans.length !== 2) return;
+      work['publishInfo'] = { containerTitle: journalAndDateSpans[0].textContent as string };
+      const date = extractDateNumsFromStr(journalAndDateSpans[1].textContent as string);
+      if (date) {
+        work['publishInfo'] = Object.assign(work['publishInfo'], date);
+      }
+    } else {
+      const publishInfo: PublishInfo = {};
+      const journalEle = parentElement.querySelector('#publication-title');
+      if (journalEle && journalEle.textContent) publishInfo['containerTitle'] = journalEle.textContent;
+      // dateInfoEle 是格式类似 "Volume 101, 28 February 2022, Pages 226-233",
+      // "Volume 219, Part A, January 2024, 112744", "Available online 1 February 2024" 的文本
+      const dateInfoEle = parentElement.querySelector('.publication-volume div');
+      if (dateInfoEle) {
+        const volume = extractVolume(dateInfoEle.textContent as string);
+        if (volume) publishInfo['volume'] = volume;
+        const pages = extractPages(dateInfoEle.textContent as string);
+        if (pages) publishInfo['pages'] = pages;
+        const date = extractDateNumsFromStr(dateInfoEle.textContent as string);
+        if (date) Object.assign(publishInfo, date);
+      }
+      if (Object.keys(publishInfo).length > 0) work['publishInfo'] = publishInfo;
+    }
+  }
+
+  extractAuthors(parentElement: Element, work: Work, searchResult = true) {
+    if (searchResult) {
+      const authorsEles = parentElement.querySelectorAll('.Authors  li');
+      if (!authorsEles) return;
+      work['authors'] = Array.from(authorsEles).map((ele) => ({ fullName: ele.textContent as string }));
+    } else {
+      const authorsEles = parentElement.querySelectorAll('button[data-xocs-content-type="author"]');
+      const authors: Author[] = [];
+      Array.from(authorsEles).forEach((ele) => {
+        const givenNameEle = ele.querySelector('.given-name');
+        const surNameEle = ele.querySelector('.surname');
+        if (givenNameEle && givenNameEle.textContent && surNameEle && surNameEle.textContent) {
+          authors.push({
+            givenName: givenNameEle.textContent,
+            familyName: surNameEle.textContent,
+            fullName: `${givenNameEle.textContent} ${surNameEle.textContent}`,
+          });
+        }
+      });
+      if (authors.length > 0) work['authors'] = authors;
+    }
+  }
+
+  /**
+   * 只有登录用户才能获取下载链接
+   */
+  extractDownloadLinks(parentElement: Element, work: Work, searchResult = true) {
+    let downloadLinkEle;
+    if (searchResult) {
+      downloadLinkEle = parentElement.querySelector('.DownloadPdf a');
+    } else {
+      downloadLinkEle = parentElement.querySelector('.ViewPDF a');
+    }
+    if (!downloadLinkEle) return;
+    work['digitalResources'] = [
+      {
+        resourceLink: ('https://www.sciencedirect.com' + downloadLinkEle.getAttribute('href')) as string,
+        contentType: 'application/pdf',
+      },
+    ];
+  }
+
+  /**
+   * 只有登录用户才能在搜索结果页获取摘要
+   */
+  extractAbstract(parentElement: Element, work: Work, searchResult = true) {
+    if (searchResult) {
+      const abstractEle = parentElement.querySelector('.abstract-section');
+      if (!abstractEle) return;
+      work['abstract'] = abstractEle.textContent as string;
+    } else {
+      const abstractEle = parentElement.querySelector('#abstracts');
+      if (!abstractEle) return;
+      const abstract = abstractEle.querySelector('.author div')?.textContent;
+      if (abstract) work['abstract'] = abstract;
+      const highlights = Array.from(abstractEle.querySelectorAll('.author-highlights li'));
+      if (highlights.length > 0) {
+        work['highlights'] = highlights.map((ele) => ele.textContent as string);
+      }
+    }
+  }
+
+  /**
+   * 只有详情页才能看到关键词，搜索结果页拿不到关键词
+   */
+  extractKeywords(parentElement: Element, work: Work) {
+    const keywordsEle = Array.from(parentElement.querySelectorAll('.keyword'));
+    if (keywordsEle.length === 0) return;
+    work['subjects'] = keywordsEle.map((ele) => ele.textContent as string);
+  }
+
+  /**
+   * 抽取论文被引用次数。只有论文详情页有，搜索结果页没有
+   */
+  extractReferencedByCount(parentElement: Element, work: Work) {
+    const referencedByCountStr = parentElement.querySelector('#citing-articles-header')?.textContent;
+    if (!referencedByCountStr) return;
+    const match = referencedByCountStr.match(/\d+/);
+    if (match) work['referencedByCount'] = parseInt(match[0]);
+  }
+
+  matchUrl(url: string): boolean {
+    return url.startsWith(this.SEARCH_URL) || url.startsWith(this.WORK_URL);
+  }
+
+  async parseSearchResultDoc(doc: Document): Promise<Work[]> {
+    const works: Work[] = [];
+    await this.expandAbstracts();
+    // 'result-item-content' 这个 class 是所有搜索结果的 div container 的 class
+    document.querySelectorAll('.result-item-content').forEach((workEle) => {
+      const work: Work = {};
+      const titleEle = workEle.querySelector('h2 a');
+      if (titleEle) {
+        work['title'] = titleEle.textContent as string;
+      } else {
+        return;
+      }
+      work['url'] = ('https://www.sciencedirect.com' + titleEle.getAttribute('href')) as string;
+      this.extractPublishInfo(workEle, work);
+      this.extractAuthors(workEle, work);
+      this.extractDownloadLinks(workEle, work);
+      this.extractAbstract(workEle, work);
+      works.push(work);
+    });
+    return works;
+  }
+
+  /**
+   * 获取文献详情页的文献信息
+   */
+  parseWorkDoc(doc: Document): Work {
+    const work: Work = {};
+    const titleEle = doc.querySelector('#screen-reader-main-title');
+    if (!titleEle) return work;
+    work['title'] = titleEle.textContent as string;
+    work['url'] = doc.documentURI;
+    this.extractPublishInfo(doc.body, work, false);
+    this.extractAuthors(doc.body, work, false);
+    this.extractDownloadLinks(doc.body, work, false);
+    this.extractAbstract(doc.body, work, false);
+    this.extractKeywords(doc.body, work);
+    this.extractReferencedByCount(doc.body, work);
+    return work;
+  }
+
+  async parseDoc(doc: Document): Promise<Work[]> {
+    if (doc.documentURI.startsWith(this.SEARCH_URL)) {
+      return await this.parseSearchResultDoc(doc);
+    } else if (doc.documentURI.startsWith(this.WORK_URL)) {
+      const work = this.parseWorkDoc(doc);
+      return Promise.resolve([work]);
+    }
+    return Promise.resolve([]); // 不会走到这里，只是为了防止类型检查报错
+  }
+
+  /**
+   * 在搜索结果页，可以查看每个文献的摘要，但是需要点一个按钮，然后异步加载
+   * 只有登录用户才能在搜索结果页获取摘要
+   */
+  async expandAbstracts() {
+    document.querySelectorAll('.PreviewLinks').forEach((container) => {
+      // 摘要已经展开，不用再次展开
+      if (container.querySelector('.preview-body-container')) return;
+      container
+        .querySelector('button[aria-label="Abstract"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    for (const container of Array.from(document.querySelectorAll('.preview-body-container'))) {
+      await waitForElement(container, ['.abstract-section', '.empty-abstract']);
+    }
+  }
+}
+
 export async function scrapeWorks(doc: Document): Promise<Work[] | null> {
-  for (const scraper of [new ArxivScraper(), new GoogleScholarScraper()]) {
+  for (const scraper of [new ArxivScraper(), new GoogleScholarScraper(), new ScienceDirectScraper()]) {
     if (scraper.matchUrl(doc.location.href)) {
       return await scraper.parseDoc(doc);
     }

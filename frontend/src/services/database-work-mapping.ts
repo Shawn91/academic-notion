@@ -31,6 +31,7 @@ function generatePDItemValue(
   PDProperty: NProperty,
   workPropertyValue:
     | string
+    | number
     | string[]
     | boolean
     | {
@@ -40,8 +41,22 @@ function generatePDItemValue(
   work: Work
 ) {
   const t = PDProperty['type'];
+  if (typeof workPropertyValue === 'string') {
+    workPropertyValue = workPropertyValue.slice(0, 2000);
+  }
   if (t === 'rich_text' || t === 'title') {
-    return { [t]: [{ text: { content: workPropertyValue } }] };
+    let value: string | undefined;
+    if (typeof workPropertyValue === 'string') {
+      value = workPropertyValue;
+    } else if (typeof workPropertyValue === 'number') {
+      value = workPropertyValue.toString();
+      // @ts-ignore 虽然已经判断了是 array，但是 workPropertyValue.every 这里会报错。疑似是 ts bug，而且要到 5.2 版本才会修复
+    } else if (workPropertyValue instanceof Array && workPropertyValue.every((ele) => typeof ele === 'string')) {
+      value = workPropertyValue.join('\n').slice(0, 2000);
+    }
+    if (value) {
+      return { [t]: [{ text: { content: value } }] };
+    }
   } else if (t === 'select' || t === 'status') {
     return { [t]: { name: workPropertyValue } };
   } else if (t === 'multi_select' && workPropertyValue instanceof Array) {
@@ -98,6 +113,12 @@ export function transformFromWorkToPDItem(mapping: PDToWorkMapping, work: Work) 
       PDItemValue = generatePDItemValue(
         mapping[PDPropertyName]?.['PDProperty'] as NProperty,
         work['digitalResources']?.[0][workPropertyName] as string,
+        work
+      );
+    } else if (workPropertyName === 'authors' && work['authors'] instanceof Array && work['authors'].length > 0) {
+      PDItemValue = generatePDItemValue(
+        mapping[PDPropertyName]?.['PDProperty'] as NProperty,
+        work['authors'].map((ele) => ele.fullName as string),
         work
       );
     } else if (workPropertyName in work) {

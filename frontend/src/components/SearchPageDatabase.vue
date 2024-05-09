@@ -50,6 +50,11 @@ const DisplayedWorkProperties: {
         key: 'subjects',
         description: 'The subjects, tags or keywords of a paper.',
       },
+      {
+        label: 'Highlights',
+        key: 'highlights',
+        description: 'Highlights of a paper',
+      },
     ],
   },
   {
