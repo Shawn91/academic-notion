@@ -468,6 +468,11 @@ components:
             $ref: '#/components/schemas/Author'
         abstract:
           type: string
+        highlights:
+          type: array
+          items:
+            type: string
+          description: 论文核心亮点。部分论文有
         subjects:
           type: array
           description: 所属领域。对应 arxiv 的 category 字段

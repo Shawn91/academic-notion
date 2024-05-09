@@ -239,6 +239,8 @@ export interface components {
       subtitle?: string;
       authors?: components["schemas"]["Author"][];
       abstract?: string;
+      /** @description 论文核心亮点。部分论文有 */
+      highlights?: string[];
       /** @description 所属领域。对应 arxiv 的 category 字段 */
       subjects?: string[];
       DOI?: string;
