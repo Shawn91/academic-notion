@@ -6,13 +6,13 @@ import { onBeforeMount, onMounted, ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
 import _ from 'lodash';
-import { areSameProperties } from 'src/services/database-work-mapping';
+import { areSameProperties, updateExistedPDToWorkMapping } from 'src/services/database-work-mapping';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
 const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文献的数据库的信息
 
 // 存储当前用户选中的 database column 到 work property 的对应关系。
-// key 是 database 的 column 列名
+// key 是 database 的 id
 const existedPDToWorkMappings = ref<{ [key: string]: SavedPDToWorkMapping }>({});
 const selectedWorks = ref<Work[]>([]); // 选中的文献
 let selectedPDId = ref<string | undefined>(undefined);
@@ -32,10 +32,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
 });
 
-function closePopup() {
-  window.parent.postMessage({ message: 'close-popup' }, '*');
-}
-
 async function uploadWorks() {
   if (!selectedPDId.value) return;
   await chrome.runtime.sendMessage({
@@ -46,6 +42,32 @@ async function uploadWorks() {
     },
     message: 'upload-works',
   });
+}
+
+/**
+ * 获取选中的数据库的最新的 schema
+ */
+async function updatePDInfo() {
+  if (!selectedPDId.value) return;
+  // 远程获取当前选中的 database 的最新的 schema
+  const selectedPDLatestInfo: NPDInfo = (
+    await chrome.runtime.sendMessage({
+      message: 'fetch-pages-databases',
+      data: { id: selectedPDId.value, PDType: 'database' },
+    })
+  ).data;
+  // 更新展示的数据库列
+  existedPDInfo.value[selectedPDId.value] = selectedPDLatestInfo;
+  // 更新相关 mapping
+  existedPDToWorkMappings.value[selectedPDId.value]['mapping'] = updateExistedPDToWorkMapping(
+    existedPDToWorkMappings.value[selectedPDId.value]['mapping'],
+    selectedPDLatestInfo
+  );
+  await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
+  await UserDataLocalManager.savePDToWorkMapping(
+    selectedPDId.value as string,
+    existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
+  );
 }
 
 /**
@@ -77,7 +99,15 @@ async function handleUploadWorkButtonClicked() {
     showPDInfoOutdatedDialog.value = Boolean(selectedPDOldInfo);
     // 更新展示的数据库列
     existedPDInfo.value[selectedPDId.value] = selectedPDLatestInfo;
+    existedPDToWorkMappings.value[selectedPDId.value]['mapping'] = updateExistedPDToWorkMapping(
+      existedPDToWorkMappings.value[selectedPDId.value]['mapping'],
+      selectedPDLatestInfo
+    );
     await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
+    await UserDataLocalManager.savePDToWorkMapping(
+      selectedPDId.value as string,
+      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
+    );
   }
 }
 
@@ -123,7 +153,6 @@ onBeforeMount(async () => {
         ></work-table>
       </div>
       <div class="footer-button-group flex justify-end q-mt-sm">
-        <q-btn color="white" text-color="black" label="Cancel" @click="closePopup()" />
         <q-btn color="secondary" class="q-ml-md" label="Next" @click="pageNum = 'page-2'" />
       </div>
     </div>
@@ -135,11 +164,11 @@ onBeforeMount(async () => {
         v-model:selectedPDId="selectedPDId"
         v-model:existedPDToWorkMappings="existedPDToWorkMappings"
         :platform="works[0]?.['platform']"
+        @updatePDInfo="updatePDInfo"
       ></search-page-database>
     </div>
     <div class="footer-button-group flex justify-end q-mt-sm">
       <q-btn color="primary" label="Upload" @click="handleUploadWorkButtonClicked" />
-      <q-btn color="white" class="q-ml-md" text-color="black" label="Cancel" @click="closePopup()" />
       <q-btn color="secondary" class="q-ml-md" label="Back" @click="pageNum = 'page-1'" />
     </div>
 

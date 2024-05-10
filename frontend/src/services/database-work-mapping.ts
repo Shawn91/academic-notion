@@ -1,4 +1,4 @@
-import { NProperty, PDToWorkMapping, Work } from 'src/models/models';
+import { NPDInfo, NProperty, PDToWorkMapping, Work } from 'src/models/models';
 import _ from 'lodash';
 
 function extractDate(work: Work): string | null {
@@ -175,4 +175,26 @@ export function areSameProperties(
       return acc;
     }, {})
   );
+}
+
+/**
+ * 根据新的数据库 schema，更新 mapping。考虑 3 种情况：
+ * 1. 数据库新增了列，本函数不做处理
+ * 2. 数据库删除了列，本函数会删除 mapping 中对应的属性
+ * 3. 数据库修改了某个列的数据类型，本函数会修改 mapping 中对应的属性
+ */
+export function updateExistedPDToWorkMapping(mapping: PDToWorkMapping, newPDInfo: NPDInfo): PDToWorkMapping {
+  // 数据库删除了某个列，mapping 中也要删除该列
+  Object.keys(mapping).forEach((PDPropertyName) => {
+    if (!(PDPropertyName in newPDInfo.properties)) {
+      delete mapping[PDPropertyName];
+    }
+  });
+  // 某个列的数据类型改变了，mapping 中也要修改该列
+  Object.entries(newPDInfo.properties).forEach(([PDPropertyName, PDProperty]) => {
+    if (PDPropertyName in mapping && PDProperty.type !== mapping[PDPropertyName]?.['PDProperty'].type) {
+      mapping[PDPropertyName]['PDProperty'] = PDProperty;
+    }
+  });
+  return mapping;
 }

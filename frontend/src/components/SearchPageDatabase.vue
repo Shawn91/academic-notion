@@ -148,6 +148,8 @@ const DisplayedWorkProperties: {
   },
 ];
 
+const emit = defineEmits(['update-PD-info']);
+
 const existedPDInfo = defineModel<{ [p: string]: NPDInfo }>('existedPDInfo', { default: {} });
 // 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPDId
 const selectedPDId = defineModel<string | undefined>('selectedPDId', { default: undefined });
@@ -292,7 +294,14 @@ function handleWorkPropertySelection(
         <q-btn round dense flat icon="mdi-magnify" size="1em" @click="searchByTitle" />
       </template>
     </q-select>
-    <p class="text-caption q-mt-xs">If you don't see your database in the dropdown, please click the Magnifier icon.</p>
+    <div class="flex row justify-between">
+      <p class="text-caption q-mt-xs text-wrap">
+        If you don't see your database in the dropdown, please click the Magnifier icon.
+      </p>
+      <p class="cursor-pointer text-deep-purple text-body2 q-mt-xs" @click="emit('update-PD-info')">
+        <a><u>Get latest database columns</u></a>
+      </p>
+    </div>
     <div class="q-mt-lg">
       <q-markup-table v-if="selectedPDId" flat bordered separator="horizontal">
         <thead class="bg-indigo-1">
