@@ -1,12 +1,12 @@
 <!-- This is a popup page that runs inside an iframe. -->
 <script setup lang="ts">
 import { NPDInfo, PDToWorkMapping, SavedPDToWorkMapping, Work } from 'src/models/models';
-import WorkTable from 'components/WorkTable.vue';
 import { onBeforeMount, onMounted, ref } from 'vue';
 import SearchPageDatabase from 'components/SearchPageDatabase.vue';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
 import _ from 'lodash';
 import { areSameProperties, updateExistedPDToWorkMapping } from 'src/services/database-work-mapping';
+import WorkTable from 'components/WorkTable.vue';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
 const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文献的数据库的信息
@@ -151,6 +151,15 @@ onBeforeMount(async () => {
           :platform="works[0]?.['platform']"
           v-model:selectedWorks="selectedWorks"
         ></work-table>
+        <div v-else style="width: 60%; height: 100%; align-self: center; position: relative">
+          <q-inner-loading
+            showing
+            label="This message should disappear shortly. If you have enough time to read this entire message, it's because either Academic Notion doesn't support
+              this website or something may have gone wrong."
+            label-class="text-teal"
+            label-style="font-size: 1.1em"
+          />
+        </div>
       </div>
       <div class="footer-button-group flex justify-end q-mt-sm">
         <q-btn color="secondary" class="q-ml-md" label="Next" @click="pageNum = 'page-2'" />
@@ -168,7 +177,12 @@ onBeforeMount(async () => {
       ></search-page-database>
     </div>
     <div class="footer-button-group flex justify-end q-mt-sm">
-      <q-btn color="primary" label="Upload" @click="handleUploadWorkButtonClicked" />
+      <q-btn
+        color="primary"
+        label="Upload"
+        :disable="selectedWorks.length === 0"
+        @click="handleUploadWorkButtonClicked"
+      />
       <q-btn color="secondary" class="q-ml-md" label="Back" @click="pageNum = 'page-1'" />
     </div>
 
