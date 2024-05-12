@@ -9,7 +9,8 @@
     "storage",
     "tabs",
     "activeTab",
-    "system.display"
+    "system.display",
+    "identity"
   ],
   "host_permissions": [
     "*://*/*"
@@ -44,5 +45,6 @@
         "*://*/*"
       ]
     }
-  ]
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3T2MTDISAi6ASU4RJv2yMPoUf/kSthgHCu5qNLbEx1pI9nZYV6hKwiNeyF5HPiltY5HXp4AjKBncaLUIxd0aAGV2lA79oXGAOd3IHr0czUgYhHVkkS+lPqDvpTO0sojuE2thBo1Jl7udzZuc0FdvQUhB5duLsT9F7qKOile4nSdeRCUCjTKP7GbUAuf3eFtTisEY2vY23SwkIS+mXF9HZJ9Ndzn7nWVwaQ15NACobJWa69oU3OOy2iR/0zY8bqf7VlVXvn1DeLu/g7BE1xPhijS8n4oo5zC2LLnzTBQz2gR+CZZlFmmdA4cxNLWHAEn1azEL82Y0l09R+uOQjf7xqQIDAQAB"
 }

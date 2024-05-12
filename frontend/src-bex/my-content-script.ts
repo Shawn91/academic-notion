@@ -7,18 +7,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       if (works) {
         sendResponse(works);
       } else {
-        sendResponse('no works found');
+        sendResponse([]);
       }
     });
   }
   return true;
-});
-
-// Listen for messages sent from the popup iframe
-window.addEventListener('message', function (event) {
-  if (event.data.message === 'close-popup') {
-    document.getElementById('academic-notion-popup')?.remove();
-  }
 });
 
 export default bexContent((/* bridge */) => {
