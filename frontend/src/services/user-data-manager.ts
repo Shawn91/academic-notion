@@ -1,6 +1,40 @@
 import { NPDInfo, PDToWorkMapping, SavedPDToWorkMapping } from 'src/models/models';
 import { BexEnvironment, detectBexEnvironment } from 'src/services/utils';
-import { is } from 'quasar';
+import _ from 'lodash';
+import { exchangeCodeForToken } from 'src/services/api';
+
+export class UserLogInManager {
+  /**
+   * notion 用户登录。应当在 background script 中运行
+   */
+  static async logIn() {
+    return new Promise((resolve, reject) => {
+      const url = new URL('https://api.notion.com/v1/oauth/authorize');
+      url.searchParams.append('client_id', '7de4e682-55ab-4be4-b0b0-5f5fc6c817d9');
+      url.searchParams.append('response_type', 'code');
+      url.searchParams.append('owner', 'user');
+      chrome.identity.launchWebAuthFlow({ url: url.href, interactive: true }, (callbackUrl) => {
+        // callbackUrl 正常情况下是类似以下格式的网址
+        // https://{chrome extension id}.chromiumapp.org/?code=036b31a6-0e27-4729-83b7-e9fede0b3a8c&state=
+        // 需要取出  code 后面的值，发送到后端，后端再使用这个 code 从 notion 处获取 access token
+        if (!callbackUrl) {
+          reject(chrome.runtime.lastError);
+        } else {
+          const code = new URL(callbackUrl).searchParams.get('code');
+          console.log('callbackUrl', callbackUrl);
+          console.log('code', code);
+          if (!code) {
+            reject({ message: `Failed to get code from ${callbackUrl}` });
+          } else {
+            exchangeCodeForToken(code).then((res) => {
+              const accessToken = res.data;
+            });
+          }
+        }
+      });
+    });
+  }
+}
 
 export enum StorageKey {
   PDList = 'page-database-list',
@@ -23,7 +57,7 @@ export class UserDataLocalManager {
         updatedPDList.push(pd);
       } else {
         const index = oldPDListIDs.indexOf(pd.id);
-        if (!is.deepEqual(oldPDList[index], pd)) {
+        if (!_.isEqual(oldPDList[index], pd)) {
           updatedPDList.push(pd);
         }
         oldPDList[index] = pd;

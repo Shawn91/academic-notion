@@ -40,3 +40,10 @@ export async function fetchPageDatabaseByID(
 ): Promise<Response<NPDInfo>> {
   return (await api.url('/page-database/').query({ PDId: id, PDType: PDType }).get()) as Response<NPDInfo>;
 }
+
+/**
+ * 用户通过 notion 的 oauth 登录后，拿到的是一个 code，将这个 code 发送到后端，由后端再次向 notion 获取 access token
+ */
+export async function exchangeCodeForToken(code: string): Promise<Response<string>> {
+  return (await api.url('/exchange-code-for-token').post({ code: code })) as Response<string>;
+}

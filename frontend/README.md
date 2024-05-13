@@ -28,3 +28,14 @@ npx openapi-typescript ../models.yaml -o src/models/models_auto.ts
 typescript 导入自动生成的 models 稍微麻烦一点，参考 https://github.com/koxudaxi/datamodel-code-generator
 
 另外，typescript 无法强制覆盖已经存在的 models_auto.ts，需要手动删除原有的文件，再生成新的
+
+# 3. Notion 用户登录
+正常的登录流程是：
+1. 前端打开一个 `https://api.notion.com/v1/oauth/authorize` 地址，供用户登录其 notion 账号。
+2. 登录成功后，notion 会访问 redirect uri（这个地址需要开发者在 integration 的设置页设置好），并在访问的同时携带一个 code
+3. redirect uri 收到 notion 的 code，将其发送到后端，后端拿着这个 code，再发送到 `https://api.notion.com/v1/oauth/token` ， 从而拿到用户的 access token，并保存在数据库
+
+在上述请求过程中，经过测试，发现如下注意事项：
+* 无论是获取 code，还是使用 code 获取 access token 请求中，官方文档都要求在请求参数中添加上 redirect uri。然而经过测试，这两处都不需要添加。
+  * integration 的设置中，允许添加多个 redirect uri，如果有多个 redirect uri 时，或许两处都需要添加？暂不确定
+* integration 从 private 转换为 public 后，最好重新生成一下 OAuth client secret。否则容易获取 access token 失败

@@ -30,6 +30,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
+import httpx
 from notion_client import Client, APIResponseError
 from notion_client.helpers import collect_paginated_api
 
@@ -37,6 +38,8 @@ from config import Config
 from models import NPDInfo
 
 notion = Client(auth=Config.NOTION_SECRET)
+httpx_auth = httpx.BasicAuth(username=Config.NOTION_CLIENT_ID, password=Config.NOTION_SECRET)
+httpx_client = httpx.Client(auth=httpx_auth)
 
 
 @dataclass
@@ -56,7 +59,7 @@ def search_by_title(query: str, search_for: Literal["database", "page"]) -> list
                 "filter": {"value": search_for, "property": "object"},
                 "sort": {"direction": "descending", "timestamp": "last_edited_time"},
                 "page_size": 100,
-            }
+            },
         )
         return search_results
     except APIResponseError as error:
@@ -85,3 +88,18 @@ def get_page_database_by_id(pd_id: str, pd_type: Literal["page", "database"]) ->
         return pd
     except APIResponseError as error:
         return ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)
+
+
+def exchange_code_for_token(code: str) -> str | ErrorResult:
+    """用户通过 notion 的 oauth 登录后，拿到的是一个 code，将这个 code 发送到后端，由后端再次向 notion 获取 access token"""
+    token_url = "https://api.notion.com/v1/oauth/token"
+    token_data = {
+        "grant_type": "authorization_code",
+        "code": code,
+    }
+    token_headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    response = httpx_client.post(token_url, json=token_data, headers=token_headers)
+    return response.json()

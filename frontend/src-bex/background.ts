@@ -2,6 +2,7 @@ import { bexBackground } from 'quasar/wrappers';
 import { ArxivScraper } from 'src/services/scrapers';
 import { fetchPageDatabaseByID, searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
 import { Work } from 'src/models/models';
+import { UserLogInManager } from 'src/services/user-data-manager';
 
 function createNewWindow(): Promise<chrome.windows.Window> {
   return new Promise((resolve, reject) => {
@@ -102,7 +103,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.storage.local.get([request.data['key']], (items) => {
       sendResponse(items[request.data['key']]);
     });
+  } else if (request.message == 'log-in') {
+    UserLogInManager.logIn().then(() => {
+      sendResponse(true);
+    });
   }
+
   return true;
 });
 

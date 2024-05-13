@@ -10,7 +10,14 @@ sys.path.append(str(Path(__file__).parent.resolve()))
 
 from models import SearchByTitleRequest, ApiResponse
 from config import Config
-from notion_api.api import search_by_title, ErrorResult, APIResponseError, upload_works, get_page_database_by_id
+from notion_api.api import (
+    search_by_title,
+    ErrorResult,
+    APIResponseError,
+    upload_works,
+    get_page_database_by_id,
+    exchange_code_for_token,
+)
 
 app = FastAPI()
 app.add_middleware(
@@ -53,6 +60,11 @@ def page_database_endpoint(
 ):
     result = get_page_database_by_id(pd_id=PDId, pd_type=PDType)
     return ApiResponse(success=True, data=result)
+
+
+@app.post("/exchange-code-for-token", response_model=ApiResponse)
+def exchange_code_for_token_endpoint(code: str = Body(..., embed=True)):
+    return exchange_code_for_token(code=code)
 
 
 if __name__ == "__main__":
