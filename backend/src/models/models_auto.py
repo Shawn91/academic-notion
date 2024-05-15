@@ -11,7 +11,7 @@ from pydantic import AnyUrl, BaseModel, Field
 
 
 class Type(Enum):
-    user = 'user'
+    user = "user"
 
 
 class NCreateEditBy(BaseModel):
@@ -20,7 +20,7 @@ class NCreateEditBy(BaseModel):
 
 
 class Type1(Enum):
-    external = 'external'
+    external = "external"
 
 
 class NCover(BaseModel):
@@ -29,7 +29,7 @@ class NCover(BaseModel):
 
 
 class Type2(Enum):
-    emoji = 'emoji'
+    emoji = "emoji"
 
 
 class NIcon(BaseModel):
@@ -38,41 +38,39 @@ class NIcon(BaseModel):
 
 
 class Type3(Enum):
-    workspace = 'workspace'
-    page_id = 'page_id'
-    database_id = 'database_id'
+    workspace = "workspace"
+    page_id = "page_id"
+    database_id = "database_id"
 
 
 class NParent(BaseModel):
-    type: Type3 = Field(..., description='这里只列举了目前已知值')
+    type: Type3 = Field(..., description="这里只列举了目前已知值")
     workspace: Optional[bool] = None
     database_id: Optional[str] = None
-    page_id: Optional[str] = Field(
-        None, description='如果 parent 是 page，那么这里就是 page 的 id'
-    )
+    page_id: Optional[str] = Field(None, description="如果 parent 是 page，那么这里就是 page 的 id")
 
 
 class Type4(Enum):
-    checkbox = 'checkbox'
-    created_by = 'created_by'
-    created_time = 'created_time'
-    date = 'date'
-    email = 'email'
-    files = 'files'
-    formula = 'formula'
-    last_edited_by = 'last_edited_by'
-    last_edited_time = 'last_edited_time'
-    multi_select = 'multi_select'
-    number = 'number'
-    people = 'people'
-    phone_number = 'phone_number'
-    relation = 'relation'
-    rich_text = 'rich_text'
-    rollup = 'rollup'
-    select = 'select'
-    status = 'status'
-    title = 'title'
-    url = 'url'
+    checkbox = "checkbox"
+    created_by = "created_by"
+    created_time = "created_time"
+    date = "date"
+    email = "email"
+    files = "files"
+    formula = "formula"
+    last_edited_by = "last_edited_by"
+    last_edited_time = "last_edited_time"
+    multi_select = "multi_select"
+    number = "number"
+    people = "people"
+    phone_number = "phone_number"
+    relation = "relation"
+    rich_text = "rich_text"
+    rollup = "rollup"
+    select = "select"
+    status = "status"
+    title = "title"
+    url = "url"
 
 
 class Formula(BaseModel):
@@ -80,16 +78,16 @@ class Formula(BaseModel):
 
 
 class Color(Enum):
-    blue = 'blue'
-    brown = 'brown'
-    default = 'default'
-    gray = 'gray'
-    green = 'green'
-    orange = 'orange'
-    pink = 'pink'
-    purple = 'purple'
-    red = 'red'
-    yellow = 'yellow'
+    blue = "blue"
+    brown = "brown"
+    default = "default"
+    gray = "gray"
+    green = "green"
+    orange = "orange"
+    pink = "pink"
+    purple = "purple"
+    red = "red"
+    yellow = "yellow"
 
 
 class MultiSelectItem(BaseModel):
@@ -99,47 +97,47 @@ class MultiSelectItem(BaseModel):
 
 
 class Format(Enum):
-    argentine_peso = 'argentine_peso'
-    baht = 'baht'
-    australian_dollar = 'australian_dollar'
-    canadian_dollar = 'canadian_dollar'
-    chilean_peso = 'chilean_peso'
-    colombian_peso = 'colombian_peso'
-    danish_krone = 'danish_krone'
-    dirham = 'dirham'
-    dollar = 'dollar'
-    euro = 'euro'
-    forint = 'forint'
-    franc = 'franc'
-    hong_kong_dollar = 'hong_kong_dollar'
-    koruna = 'koruna'
-    krona = 'krona'
-    leu = 'leu'
-    lira = 'lira'
-    mexican_peso = 'mexican_peso'
-    new_taiwan_dollar = 'new_taiwan_dollar'
-    new_zealand_dollar = 'new_zealand_dollar'
-    norwegian_krone = 'norwegian_krone'
-    number = 'number'
-    number_with_commas = 'number_with_commas'
-    percent = 'percent'
-    philippine_peso = 'philippine_peso'
-    pound = 'pound'
-    peruvian_sol = 'peruvian_sol'
-    rand = 'rand'
-    real = 'real'
-    ringgit = 'ringgit'
-    riyal = 'riyal'
-    ruble = 'ruble'
-    rupee = 'rupee'
-    rupiah = 'rupiah'
-    shekel = 'shekel'
-    singapore_dollar = 'singapore_dollar'
-    uruguayan_peso = 'uruguayan_peso'
-    yen = 'yen'
-    yuan = 'yuan'
-    won = 'won'
-    zloty = 'zloty'
+    argentine_peso = "argentine_peso"
+    baht = "baht"
+    australian_dollar = "australian_dollar"
+    canadian_dollar = "canadian_dollar"
+    chilean_peso = "chilean_peso"
+    colombian_peso = "colombian_peso"
+    danish_krone = "danish_krone"
+    dirham = "dirham"
+    dollar = "dollar"
+    euro = "euro"
+    forint = "forint"
+    franc = "franc"
+    hong_kong_dollar = "hong_kong_dollar"
+    koruna = "koruna"
+    krona = "krona"
+    leu = "leu"
+    lira = "lira"
+    mexican_peso = "mexican_peso"
+    new_taiwan_dollar = "new_taiwan_dollar"
+    new_zealand_dollar = "new_zealand_dollar"
+    norwegian_krone = "norwegian_krone"
+    number = "number"
+    number_with_commas = "number_with_commas"
+    percent = "percent"
+    philippine_peso = "philippine_peso"
+    pound = "pound"
+    peruvian_sol = "peruvian_sol"
+    rand = "rand"
+    real = "real"
+    ringgit = "ringgit"
+    riyal = "riyal"
+    ruble = "ruble"
+    rupee = "rupee"
+    rupiah = "rupiah"
+    shekel = "shekel"
+    singapore_dollar = "singapore_dollar"
+    uruguayan_peso = "uruguayan_peso"
+    yen = "yen"
+    yuan = "yuan"
+    won = "won"
+    zloty = "zloty"
 
 
 class Number(BaseModel):
@@ -153,30 +151,30 @@ class Relation(BaseModel):
 
 
 class Function(Enum):
-    average = 'average'
-    checked = 'checked'
-    count_per_group = 'count_per_group'
-    count = 'count'
-    count_values = 'count_values'
-    date_range = 'date_range'
-    earliest_date = 'earliest_date'
-    empty = 'empty'
-    latest_date = 'latest_date'
-    max = 'max'
-    median = 'median'
-    min = 'min'
-    not_empty = 'not_empty'
-    percent_checked = 'percent_checked'
-    percent_empty = 'percent_empty'
-    percent_not_empty = 'percent_not_empty'
-    percent_per_group = 'percent_per_group'
-    percent_unchecked = 'percent_unchecked'
-    range = 'range'
-    unchecked = 'unchecked'
-    unique = 'unique'
-    show_original = 'show_original'
-    show_unique = 'show_unique'
-    sum = 'sum'
+    average = "average"
+    checked = "checked"
+    count_per_group = "count_per_group"
+    count = "count"
+    count_values = "count_values"
+    date_range = "date_range"
+    earliest_date = "earliest_date"
+    empty = "empty"
+    latest_date = "latest_date"
+    max = "max"
+    median = "median"
+    min = "min"
+    not_empty = "not_empty"
+    percent_checked = "percent_checked"
+    percent_empty = "percent_empty"
+    percent_not_empty = "percent_not_empty"
+    percent_per_group = "percent_per_group"
+    percent_unchecked = "percent_unchecked"
+    range = "range"
+    unchecked = "unchecked"
+    unique = "unique"
+    show_original = "show_original"
+    show_unique = "show_unique"
+    sum = "sum"
 
 
 class Rollup(BaseModel):
@@ -196,17 +194,13 @@ class Select(BaseModel):
 class Option(BaseModel):
     color: Optional[Color] = None
     id: Optional[str] = None
-    name: Optional[str] = Field(
-        None, description='Commas (",") are not valid for status values.'
-    )
+    name: Optional[str] = Field(None, description='Commas (",") are not valid for status values.')
 
 
 class Group(BaseModel):
     color: Optional[Color] = None
     id: Optional[str] = None
-    name: Optional[str] = Field(
-        None, description='Commas (",") are not valid for status values.'
-    )
+    name: Optional[str] = Field(None, description='Commas (",") are not valid for status values.')
     option_ids: Optional[List[str]] = None
 
 
@@ -217,8 +211,8 @@ class Status(BaseModel):
 
 class NProperty(BaseModel):
     id: str
-    type: Type4 = Field(..., description='表示这一列是文本、日期、多选等')
-    name: str = Field(..., description='这一列展示出来的列名')
+    type: Type4 = Field(..., description="表示这一列是文本、日期、多选等")
+    name: str = Field(..., description="这一列展示出来的列名")
     formula: Optional[Formula] = None
     multi_select: Optional[List[MultiSelectItem]] = None
     number: Optional[Number] = None
@@ -229,25 +223,25 @@ class NProperty(BaseModel):
 
 
 class Color4(Enum):
-    blue = 'blue'
-    blue_background = 'blue_background'
-    brown = 'brown'
-    brown_background = 'brown_background'
-    default = 'default'
-    gray = 'gray'
-    gray_background = 'gray_background'
-    green = 'green'
-    green_background = 'green_background'
-    orange = 'orange'
-    orange_background = 'orange_background'
-    pink = 'pink'
-    pink_background = 'pink_background'
-    purple = 'purple'
-    purple_background = 'purple_background'
-    red = 'red'
-    red_background = 'red_background'
-    yellow = 'yellow'
-    yellow_background = 'yellow_background'
+    blue = "blue"
+    blue_background = "blue_background"
+    brown = "brown"
+    brown_background = "brown_background"
+    default = "default"
+    gray = "gray"
+    gray_background = "gray_background"
+    green = "green"
+    green_background = "green_background"
+    orange = "orange"
+    orange_background = "orange_background"
+    pink = "pink"
+    pink_background = "pink_background"
+    purple = "purple"
+    purple_background = "purple_background"
+    red = "red"
+    red_background = "red_background"
+    yellow = "yellow"
+    yellow_background = "yellow_background"
 
 
 class NAnnotations(BaseModel):
@@ -261,16 +255,16 @@ class NAnnotations(BaseModel):
 
 class NTextLink(BaseModel):
     content: Optional[str] = None
-    link: Optional[str] = Field(None, description='inline link')
+    link: Optional[str] = Field(None, description="inline link")
 
 
 class Type5(Enum):
-    database = 'database'
-    date = 'date'
-    link_preview = 'link_preview'
-    page = 'page'
-    template_mention = 'template_mention'
-    user = 'user'
+    database = "database"
+    date = "date"
+    link_preview = "link_preview"
+    page = "page"
+    template_mention = "template_mention"
+    user = "user"
 
 
 class Database(BaseModel):
@@ -291,17 +285,17 @@ class Page(BaseModel):
 
 
 class Type6(Enum):
-    template_mention_date = 'template_mention_date'
-    template_mention_user = 'template_mention_user'
+    template_mention_date = "template_mention_date"
+    template_mention_user = "template_mention_user"
 
 
 class TemplateMentionDate(Enum):
-    today = 'today'
-    now = 'now'
+    today = "today"
+    now = "now"
 
 
 class TemplateMentionUser(Enum):
-    me = 'me'
+    me = "me"
 
 
 class TemplateMention(BaseModel):
@@ -311,7 +305,7 @@ class TemplateMention(BaseModel):
 
 
 class Object(Enum):
-    user = 'user'
+    user = "user"
 
 
 class User(BaseModel):
@@ -334,9 +328,9 @@ class NEquation(BaseModel):
 
 
 class Type7(Enum):
-    text = 'text'
-    mention = 'mention'
-    equation = 'equation'
+    text = "text"
+    mention = "mention"
+    equation = "equation"
 
 
 class NRichText(BaseModel):
@@ -350,12 +344,12 @@ class NRichText(BaseModel):
 
 
 class Object1(Enum):
-    page = 'page'
-    database = 'database'
+    page = "page"
+    database = "database"
 
 
 class NPDInfo(BaseModel):
-    id: str = Field(..., description='page 或 database 的 id')
+    id: str = Field(..., description="page 或 database 的 id")
     object: Object1
     created_time: str
     last_edited_time: str
@@ -368,48 +362,46 @@ class NPDInfo(BaseModel):
     in_trash: bool
     properties: Dict[str, NProperty] = Field(
         ...,
-        description='一个 dict，key 是展示出来的列名（即 Property.name），value 是 Property',
+        description="一个 dict，key 是展示出来的列名（即 Property.name），value 是 Property",
     )
-    description: List[Dict[str, Any]] = Field(..., description='内容尚不详')
-    is_inline: bool = Field(..., description='应该是只有 database 才有')
+    description: List[Dict[str, Any]] = Field(..., description="内容尚不详")
+    is_inline: bool = Field(..., description="应该是只有 database 才有")
     public_url: Optional[str] = None
-    title: List[NRichText] = Field(
-        ..., description='database 的 title。尚不清楚为何返回的是一个 list'
-    )
+    title: List[NRichText] = Field(..., description="database 的 title。尚不清楚为何返回的是一个 list")
     url: Optional[str] = None
 
 
 class WorkType(Enum):
-    book_section = 'book-section'
-    monograph = 'monograph'
-    report_component = 'report-component'
-    report = 'report'
-    peer_review = 'peer-review'
-    book_track = 'book-track'
-    journal_article = 'journal-article'
-    book_part = 'book-part'
-    other = 'other'
-    book = 'book'
-    journal_volume = 'journal-volume'
-    book_set = 'book-set'
-    reference_entry = 'reference-entry'
-    proceedings_article = 'proceedings-article'
-    journal = 'journal'
-    component = 'component'
-    book_chapter = 'book-chapter'
-    proceedings_series = 'proceedings-series'
-    report_series = 'report-series'
-    proceedings = 'proceedings'
-    database = 'database'
-    standard = 'standard'
-    reference_book = 'reference-book'
-    posted_content = 'posted-content'
-    journal_issue = 'journal-issue'
-    dissertation = 'dissertation'
-    grant = 'grant'
-    dataset = 'dataset'
-    book_series = 'book-series'
-    edited_book = 'edited-book'
+    book_section = "book-section"
+    monograph = "monograph"
+    report_component = "report-component"
+    report = "report"
+    peer_review = "peer-review"
+    book_track = "book-track"
+    journal_article = "journal-article"
+    book_part = "book-part"
+    other = "other"
+    book = "book"
+    journal_volume = "journal-volume"
+    book_set = "book-set"
+    reference_entry = "reference-entry"
+    proceedings_article = "proceedings-article"
+    journal = "journal"
+    component = "component"
+    book_chapter = "book-chapter"
+    proceedings_series = "proceedings-series"
+    report_series = "report-series"
+    proceedings = "proceedings"
+    database = "database"
+    standard = "standard"
+    reference_book = "reference-book"
+    posted_content = "posted-content"
+    journal_issue = "journal-issue"
+    dissertation = "dissertation"
+    grant = "grant"
+    dataset = "dataset"
+    book_series = "book-series"
+    edited_book = "edited-book"
 
 
 class PublishInfo(BaseModel):
@@ -427,52 +419,46 @@ class Author(BaseModel):
     familyName: Optional[str] = None
     givenName: Optional[str] = None
     fullName: Optional[str] = None
-    ORCID: Optional[str] = Field(
-        None, description="Researcher's ID, can be found at https://orcid.org"
-    )
+    ORCID: Optional[str] = Field(None, description="Researcher's ID, can be found at https://orcid.org")
 
 
 class DigitalResource(BaseModel):
-    resourceLink: Optional[AnyUrl] = Field(None, description='原始内容的下载链接')
-    contentType: Optional[str] = Field(None, description='原始内容的 mime 类型')
+    resourceLink: Optional[AnyUrl] = Field(None, description="原始内容的下载链接")
+    contentType: Optional[str] = Field(None, description="原始内容的 mime 类型")
 
 
 class ClinicalTrial(BaseModel):
-    id: Optional[str] = Field(None, description='临床试验的 id 号')
-    registry: Optional[str] = Field(None, description='临床试验的注册机构的 DOI')
+    id: Optional[str] = Field(None, description="临床试验的 id 号")
+    registry: Optional[str] = Field(None, description="临床试验的注册机构的 DOI")
 
 
 class Platform(Enum):
-    arXiv = 'arXiv'
-    GoogleScholar = 'GoogleScholar'
+    arXiv = "arXiv"
+    GoogleScholar = "GoogleScholar"
 
 
 class Work(BaseModel):
     title: Optional[str] = None
-    subtitle: Optional[str] = Field(None, description='副标题')
+    subtitle: Optional[str] = Field(None, description="副标题")
     authors: Optional[List[Author]] = None
     abstract: Optional[str] = None
-    highlights: Optional[List[str]] = Field(
-        None, description='论文核心亮点。部分论文有'
-    )
-    subjects: Optional[List[str]] = Field(
-        None, description='所属领域。对应 arxiv 的 category 字段'
-    )
+    highlights: Optional[List[str]] = Field(None, description="论文核心亮点。部分论文有")
+    subjects: Optional[List[str]] = Field(None, description="所属领域。对应 arxiv 的 category 字段")
     DOI: Optional[str] = None
     platform: Optional[Platform] = None
     platformId: Optional[str] = None
-    url: Optional[AnyUrl] = Field(None, description='详情页链接')
+    url: Optional[AnyUrl] = Field(None, description="详情页链接")
     authorComments: Optional[List[str]] = Field(
         None,
-        description='作者添加的注释，一般包含的内容：论文有多少页；相关数据可以在哪下载；等等',
+        description="作者添加的注释，一般包含的内容：论文有多少页；相关数据可以在哪下载；等等",
     )
     publishInfo: Optional[PublishInfo] = None
-    referencedByCount: Optional[int] = Field(None, description='被引用次数')
+    referencedByCount: Optional[int] = Field(None, description="被引用次数")
     type: Optional[WorkType] = None
     ISBN: Optional[List[str]] = None
     digitalResources: Optional[List[DigitalResource]] = None
     clinicalTrial: Optional[List[ClinicalTrial]] = None
-    references: Optional[List[Work]] = Field(None, description='参考文献')
+    references: Optional[List[Work]] = Field(None, description="参考文献")
 
 
 Work.update_forward_refs()

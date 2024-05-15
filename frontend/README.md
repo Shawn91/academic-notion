@@ -39,3 +39,79 @@ typescript 导入自动生成的 models 稍微麻烦一点，参考 https://gith
 * 无论是获取 code，还是使用 code 获取 access token 请求中，官方文档都要求在请求参数中添加上 redirect uri。然而经过测试，这两处都不需要添加。
   * integration 的设置中，允许添加多个 redirect uri，如果有多个 redirect uri 时，或许两处都需要添加？暂不确定
 * integration 从 private 转换为 public 后，最好重新生成一下 OAuth client secret。否则容易获取 access token 失败
+
+以下是不同情况下的 access token 请求的返回值。从下面的试验来看，
+* access token，以及随着 access_token 一起返回的 bot_id（notion 文档建议数据库中以 bot_id 来索引 access token），都是绑定在 workspace 上的某一个用户。
+
+* 一个用户有多个 workspace 时，每个 workspace 对应一个 access token 和 bot_id，对同一个 workspace 增删授权 pages/databases，不改变 access token 和 bot id
+
+* 一个 workspace 多个用户都授权访问，则每个用户的 access token 和 bot id 都不同
+
+
+```
+1. 首次授权，同时授权两个 workspace 的 pages。似乎最终只能添加一个 workspace，即最后点击 "allow access" 时，页面显示的那个 workspace
+
+{'access_token': 'secret_GiWfkPZxl4TNmwIVPHiWKSc0w0ptDeAtJ88bKCTq5bT',
+ 'bot_id': '4508aed7-c1a4-429a-be23-0439a31998d3',
+ 'duplicated_template_id': None,
+ 'owner': {'type': 'user',
+           'user': {'id': 'cc83df32-0517-4503-81aa-f8c24a67d8f8',
+                    'object': 'user'}},
+ 'request_id': 'bb559033-faab-44c9-8204-444687e52f57',
+ 'token_type': 'bearer',
+ 'workspace_icon': None,
+ 'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959',
+ 'workspace_name': "Yuxiang's Workspace"}
+
+ 2. 在有授权pages的情况下，再次登录并添加已有授权的 workspace 的新 pages 授权。无论这个 pages 是来自 workspace 内的 private 部分，还是共享部分
+ {'access_token': 'secret_GiWfkPZxl4TNmwIVPHiWKSc0w0ptDeAtJ88bKCTq5bT',
+ 'bot_id': '4508aed7-c1a4-429a-be23-0439a31998d3',
+ 'duplicated_template_id': None,
+ 'owner': {'type': 'user',
+           'user': {'id': 'cc83df32-0517-4503-81aa-f8c24a67d8f8',
+                    'object': 'user'}},
+ 'request_id': 'f7bab50c-afd2-468f-9da8-c3ed343d737b',
+ 'token_type': 'bearer',
+ 'workspace_icon': None,
+ 'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959',
+ 'workspace_name': "Yuxiang's Workspace"}
+
+  3. 在有授权pages的情况下，再次登录并添加从未授权的 workspace 的 pages 授权
+  {'access_token': 'secret_9F1nfugVsWViIx4fiqf8bgXXtw7hD5TZcxrIGWgmPFY',
+ 'bot_id': '279b7448-6bf5-4ffe-bf9a-0bf5aa72a7e5',
+ 'duplicated_template_id': None,
+ 'owner': {'type': 'user',
+           'user': {'id': 'cc83df32-0517-4503-81aa-f8c24a67d8f8',
+                    'object': 'user'}},
+ 'request_id': 'e805bea3-a7c8-4005-a7e1-101a3e727982',
+ 'token_type': 'bearer',
+ 'workspace_icon': None,
+ 'workspace_id': 'd85ea4e8-d7fb-4924-ada6-97a11fbfad8c',
+ 'workspace_name': 'Example Team'}
+
+ 4. 在已经授权新 workspace 情况下，再次授权已经授权的 workspace
+ {'access_token': 'secret_GiWfkPZxl4TNmwIVPHiWKSc0w0ptDeAtJ88bKCTq5bT',
+ 'bot_id': '4508aed7-c1a4-429a-be23-0439a31998d3',
+ 'duplicated_template_id': None,
+ 'owner': {'type': 'user',
+           'user': {'id': 'cc83df32-0517-4503-81aa-f8c24a67d8f8',
+                    'object': 'user'}},
+ 'request_id': 'cb0ce459-37c6-487f-ac61-414965424582',
+ 'token_type': 'bearer',
+ 'workspace_icon': None,
+ 'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959',
+ 'workspace_name': "Yuxiang's Workspace"}
+
+5. 一个共享的 workspace，owner 已经添加授权的情况下，其他member再添加授权
+{'access_token': 'secret_IuDYbPJaWrOyvsgHXNC1VauKwI2qX3B1p0KYtre5JqM',
+ 'bot_id': 'a5548c96-95bb-4f8f-8e41-799b8727cec1',
+ 'duplicated_template_id': None,
+ 'owner': {'type': 'user',
+           'user': {'id': 'cf36cd9a-d012-43ca-8fce-e3b042facea0',
+                    'object': 'user'}},
+ 'request_id': 'bcd3dc8b-e1c2-4af0-83a5-50ad335c12b6',
+ 'token_type': 'bearer',
+ 'workspace_icon': None,
+ 'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959',
+ 'workspace_name': "Yuxiang's Workspace"}
+```

@@ -28,6 +28,7 @@ Notion API 的信息
 """
 import json
 from dataclasses import dataclass
+from pprint import pprint
 from typing import Literal
 
 import httpx
@@ -38,8 +39,10 @@ from config import Config
 from models import NPDInfo
 
 notion = Client(auth=Config.NOTION_SECRET)
+# 这个 httpx_auth 可以直接作为参数传递给 httpx.Client，这样所有请求都会带上这个 auth。也可以在每次请求时传递。
+# 这个 auth 本质上就是将 username 和 password 拼接后，转换为 base64 字符串，再添加到请求 header 中，这是 http 协议的基础认证方法
 httpx_auth = httpx.BasicAuth(username=Config.NOTION_CLIENT_ID, password=Config.NOTION_SECRET)
-httpx_client = httpx.Client(auth=httpx_auth)
+httpx_client = httpx.Client()
 
 
 @dataclass
@@ -101,5 +104,12 @@ def exchange_code_for_token(code: str) -> str | ErrorResult:
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
-    response = httpx_client.post(token_url, json=token_data, headers=token_headers)
+    response = httpx_client.post(token_url, json=token_data, headers=token_headers, auth=httpx_auth)
+    pprint(response.json())
     return response.json()
+
+
+"""
+response.json() 返回值
+{'access_token': 'secret_zJX5gcHKLUKs1kleB8FW8F0Whc5KAKgJxykPR96jWTt', 'token_type': 'bearer', 'bot_id': '4508aed7-c1a4-429a-be23-0439a31998d3', 'workspace_name': "Yuxiang's Workspace", 'workspace_icon': None, 'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959', 'owner': {'type': 'user', 'user': {'object': 'user', 'id': 'cc83df32-0517-4503-81aa-f8c24a67d8f8'}}, 'duplicated_template_id': None, 'request_id': 'be782dc8-d649-4834-abb4-acca08663140'}
+"""
