@@ -189,6 +189,33 @@ export interface components {
       title: components["schemas"]["NRichText"][];
       url?: string | null;
     };
+    /** @description NAccessToken 中 owner 字段两个值之一 */
+    NAccessTokenOwnerUser: {
+      /** @enum {string} */
+      type?: "user";
+      user?: {
+        id?: string;
+        /** @enum {string} */
+        object?: "user";
+      };
+    };
+    /** @description NAccessToken 中 owner 字段两个值之一 */
+    NAccessTokenOwnerWorkspace: {
+      /** @enum {boolean} */
+      workspace?: true;
+    };
+    /** @description Notion API 获取 access token 接口的返回值 */
+    NAccessToken: {
+      access_token: string;
+      bot_id: string;
+      workspace_id: string;
+      workspace_name?: string;
+      workspace_icon?: string;
+      /** @description 如果用户选择使用开发者提供的模板，那么该字段会是用户使用该模板创建的 page/database 的 id */
+      duplicated_template_id?: string;
+      request_id: string;
+      owner: components["schemas"]["NAccessTokenOwnerUser"] | components["schemas"]["NAccessTokenOwnerWorkspace"];
+    };
     /**
      * @description 是书、会议论文、期刊论文、还是别的类型。主要内容来自 crossref.org 的论文类型，https://api.crossref.org/v1/types。
      * @enum {string}

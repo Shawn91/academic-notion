@@ -358,6 +358,61 @@ components:
         - is_inline
         - title
 
+    NAccessTokenOwnerUser:
+      description: NAccessToken 中 owner 字段两个值之一
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ user ]
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            object:
+              type: string
+              enum: [ user ]
+
+    NAccessTokenOwnerWorkspace:
+      description: NAccessToken 中 owner 字段两个值之一
+      type: object
+      properties:
+        workspace:
+          type: boolean
+          enum: [ true ]
+
+    NAccessToken:
+      type: object
+      description: Notion API 获取 access token 接口的返回值
+      properties:
+        access_token:
+          type: string
+        bot_id:
+          type: string
+        workspace_id:
+          type: string
+        workspace_name:
+          type: string
+        workspace_icon:
+          type: string
+        duplicated_template_id:
+          type: string
+          description: 如果用户选择使用开发者提供的模板，那么该字段会是用户使用该模板创建的 page/database 的 id
+        request_id:
+          type: string
+        owner:
+          oneOf:
+            - $ref: '#/components/schemas/NAccessTokenOwnerUser'
+            - $ref: '#/components/schemas/NAccessTokenOwnerWorkspace'
+      required:
+        - access_token
+        - bot_id
+        - owner
+        - request_id
+        - token_type
+        - workspace_id
+
     WorkType:
       type: string
       description: 是书、会议论文、期刊论文、还是别的类型。主要内容来自 crossref.org 的论文类型，https://api.crossref.org/v1/types。

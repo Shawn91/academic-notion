@@ -3,14 +3,15 @@ import { BexEnvironment, detectBexEnvironment } from 'src/services/utils';
 import _ from 'lodash';
 import { exchangeCodeForToken } from 'src/services/api';
 
-export class UserLogInManager {
+export class UserAuthManager {
   /**
-   * notion 用户登录。应当在 background script 中运行
+   * notion 用户登录。应当在 background script 中运行。
+   * 除了登录外，修改 page/database 授权范围也是用这个方法
    */
-  static async logIn() {
+  static async notionAuth() {
     return new Promise((resolve, reject) => {
       const url = new URL('https://api.notion.com/v1/oauth/authorize');
-      url.searchParams.append('client_id', '7de4e682-55ab-4be4-b0b0-5f5fc6c817d9');
+      url.searchParams.append('client_id', process.env.notionClientID as string);
       url.searchParams.append('response_type', 'code');
       url.searchParams.append('owner', 'user');
       chrome.identity.launchWebAuthFlow({ url: url.href, interactive: true }, (callbackUrl) => {
@@ -21,8 +22,6 @@ export class UserLogInManager {
           reject(chrome.runtime.lastError);
         } else {
           const code = new URL(callbackUrl).searchParams.get('code');
-          console.log('callbackUrl', callbackUrl);
-          console.log('code', code);
           if (!code) {
             reject({ message: `Failed to get code from ${callbackUrl}` });
           } else {

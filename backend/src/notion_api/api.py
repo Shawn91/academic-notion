@@ -28,7 +28,6 @@ Notion API 的信息
 """
 import json
 from dataclasses import dataclass
-from pprint import pprint
 from typing import Literal
 
 import httpx
@@ -105,11 +104,7 @@ def exchange_code_for_token(code: str) -> str | ErrorResult:
         "Accept": "application/json",
     }
     response = httpx_client.post(token_url, json=token_data, headers=token_headers, auth=httpx_auth)
-    pprint(response.json())
-    return response.json()
-
-
-"""
-response.json() 返回值
-{'access_token': 'secret_zJX5gcHKLUKs1kleB8FW8F0Whc5KAKgJxykPR96jWTt', 'token_type': 'bearer', 'bot_id': '4508aed7-c1a4-429a-be23-0439a31998d3', 'workspace_name': "Yuxiang's Workspace", 'workspace_icon': None, 'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959', 'owner': {'type': 'user', 'user': {'object': 'user', 'id': 'cc83df32-0517-4503-81aa-f8c24a67d8f8'}}, 'duplicated_template_id': None, 'request_id': 'be782dc8-d649-4834-abb4-acca08663140'}
-"""
+    response_json = response.json()
+    if response_json.get("error"):  # 有 error 字段说明出错了
+        return ErrorResult(message=response_json.get("error_description"), code=400)
+    return response_json

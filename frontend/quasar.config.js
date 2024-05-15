@@ -62,7 +62,9 @@ module.exports = configure(function (/* ctx */) {
 
       // publicPath: '/',
       // analyze: true,
-      // env: {},
+      env: {
+        notionClientID: '7de4e682-55ab-4be4-b0b0-5f5fc6c817d9',
+      },
       // rawDefine: {}
       // ignorePublicFolder: true,
       // minify: false,

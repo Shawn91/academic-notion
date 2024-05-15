@@ -12,6 +12,7 @@ export type Author = components['schemas']['Author'];
 export type Work = components['schemas']['Work'];
 export type Platform = components['schemas']['Platform'];
 export type DigitalResource = components['schemas']['DigitalResource'];
+export type NAccessToken = components['schemas']['NAccessToken'];
 
 // 这里的 WorkPropertyKeys 包含了 Work 中定义的所有属性名，以及这些属性名的组合/再处理得到的新属性（例如 date 就是 year+month+day 得到）
 export type WorkPropertyKeys = keyof Work | keyof PublishInfo | keyof DigitalResource | 'date';

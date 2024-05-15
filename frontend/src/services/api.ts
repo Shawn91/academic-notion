@@ -1,6 +1,6 @@
 import wretch from 'wretch';
 import QueryStringAddon from 'wretch/addons/queryString';
-import { NPDInfo, PDToWorkMapping, Work } from 'src/models/models';
+import { NAccessToken, NPDInfo, PDToWorkMapping, Work } from 'src/models/models';
 import { transformFromWorkToPDItem } from 'src/services/database-work-mapping';
 
 const baseURL = process.env.DEV ? 'http://localhost:8000' : '';
@@ -44,6 +44,6 @@ export async function fetchPageDatabaseByID(
 /**
  * 用户通过 notion 的 oauth 登录后，拿到的是一个 code，将这个 code 发送到后端，由后端再次向 notion 获取 access token
  */
-export async function exchangeCodeForToken(code: string): Promise<Response<string>> {
-  return (await api.url('/exchange-code-for-token').post({ code: code })) as Response<string>;
+export async function exchangeCodeForToken(code: string): Promise<Response<NAccessToken>> {
+  return (await api.url('/exchange-code-for-token').post({ code: code })) as Response<NAccessToken>;
 }
