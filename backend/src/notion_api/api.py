@@ -50,30 +50,35 @@ class ErrorResult:
     code: int | str
 
 
-def search_by_title(query: str, search_for: Literal["database", "page"]) -> list[NPDInfo] | ErrorResult:
+def search_by_title(
+    query: str, search_for: Literal["database", "page"], access_token: str = ""
+) -> list[NPDInfo] | ErrorResult:
     """根据标题查找 page 或 database"""
     # page_size 最大值就是 100，即每次最多返回 100 条结果
+    options = {
+        "query": query,
+        "filter": {"value": search_for, "property": "object"},
+        "sort": {"direction": "descending", "timestamp": "last_edited_time"},
+        "page_size": 100,
+    }
+    if access_token:
+        options["auth"] = access_token
     try:
         search_results: list[NPDInfo] = collect_paginated_api(
             notion.search,
-            **{
-                "query": query,
-                "filter": {"value": search_for, "property": "object"},
-                "sort": {"direction": "descending", "timestamp": "last_edited_time"},
-                "page_size": 100,
-            },
+            **options,
         )
         return search_results
     except APIResponseError as error:
         return ErrorResult(message="Notion API error", code=error.status)
 
 
-def upload_works(work_to_database_properties: list[dict]) -> list[NPDInfo | ErrorResult]:
+def upload_works(work_to_database_properties: list[dict], access_token: str) -> list[NPDInfo | ErrorResult]:
     """work_to_database_properties 是已经整理好格式的上传内容，直接将元素传递给 notion.pages.create 即可"""
     results = []
     for properties in work_to_database_properties:
         try:
-            results.append(notion.pages.create(**properties))
+            results.append(notion.pages.create(**properties, auth=access_token))
         except APIResponseError as error:
             results.append(
                 ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)
@@ -81,12 +86,14 @@ def upload_works(work_to_database_properties: list[dict]) -> list[NPDInfo | Erro
     return results
 
 
-def get_page_database_by_id(pd_id: str, pd_type: Literal["page", "database"]) -> NPDInfo | ErrorResult:
+def get_page_database_by_id(
+    pd_id: str, pd_type: Literal["page", "database"], access_token: str
+) -> NPDInfo | ErrorResult:
     try:
         if pd_type == "page":
-            pd = notion.pages.retrieve(page_id=pd_id)
+            pd = notion.pages.retrieve(page_id=pd_id, auth=access_token)
         else:
-            pd = notion.databases.retrieve(database_id=pd_id)
+            pd = notion.databases.retrieve(database_id=pd_id, auth=access_token)
         return pd
     except APIResponseError as error:
         return ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)

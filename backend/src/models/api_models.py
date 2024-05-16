@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class SearchByTitleRequest(BaseModel):
     query: str
     search_for: Literal["database", "page"]
+    access_token: str = ""
 
 
 class ApiResponse(BaseModel):

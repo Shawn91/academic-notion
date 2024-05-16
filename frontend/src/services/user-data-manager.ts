@@ -1,4 +1,4 @@
-import { NPDInfo, PDToWorkMapping, SavedPDToWorkMapping } from 'src/models/models';
+import { NAccessTokenWithWorkspace, NPDInfo, PDToWorkMapping, SavedPDToWorkMapping } from 'src/models/models';
 import { BexEnvironment, detectBexEnvironment } from 'src/services/utils';
 import _ from 'lodash';
 import { exchangeCodeForToken } from 'src/services/api';
@@ -8,7 +8,7 @@ export class UserAuthManager {
    * notion 用户登录。应当在 background script 中运行。
    * 除了登录外，修改 page/database 授权范围也是用这个方法
    */
-  static async notionAuth() {
+  static async notionAuth(): Promise<NAccessTokenWithWorkspace> {
     return new Promise((resolve, reject) => {
       const url = new URL('https://api.notion.com/v1/oauth/authorize');
       url.searchParams.append('client_id', process.env.notionClientID as string);
@@ -26,7 +26,9 @@ export class UserAuthManager {
             reject({ message: `Failed to get code from ${callbackUrl}` });
           } else {
             exchangeCodeForToken(code).then((res) => {
-              const accessToken = res.data;
+              UserDataLocalManager.saveAccessTokenWithWorkSpace(res.data).then(() => {
+                resolve(res.data);
+              });
             });
           }
         }
@@ -39,6 +41,7 @@ export enum StorageKey {
   PDList = 'page-database-list',
   PDToWorkMapping = 'page-database-to-work-mapping',
   PDInfo = 'page-database-info',
+  AccessTokenWithWorkspace = 'access-token-with-workspace',
 }
 
 export class UserDataLocalManager {
@@ -106,7 +109,7 @@ export class UserDataLocalManager {
     PDId: string | null = null
   ): Promise<{ [key: string]: SavedPDToWorkMapping } | SavedPDToWorkMapping | null> {
     // key 是 database id。value 中包含了 mapping 本身，以及上次存储 mapping 到本地的时间（时间被传换成了 string 格式）
-    let mappingLiterals: { [key: string]: { mapping: PDToWorkMapping; lastSaveTime: string } };
+    let mappingLiterals: { [key: string]: { mapping: PDToWorkMapping; lastSaveTime: string; workspaceId: string } };
     if (detectBexEnvironment() === BexEnvironment.Background) {
       mappingLiterals = (await chrome.storage.local.get([StorageKey.PDToWorkMapping]))?.[StorageKey.PDToWorkMapping];
     } else {
@@ -124,6 +127,7 @@ export class UserDataLocalManager {
       mappings[key] = {
         mapping: mappingLiterals[key]['mapping'],
         lastSaveTime: new Date(mappingLiterals[key]['lastSaveTime']),
+        workspaceId: mappingLiterals[key]['workspaceId'],
       };
     });
     if (PDId) {
@@ -137,20 +141,73 @@ export class UserDataLocalManager {
    * {Storage.PDToWorkMapping: {id1: {'mapping': mapping, 'lastSaveTime': date}}}
    * 这里的 id 指的是数据库 id
    */
-  static async savePDToWorkMapping(PDId: string, mapping: PDToWorkMapping) {
+  static async savePDToWorkMapping(PDId: string, mapping: PDToWorkMapping, workspaceId: string) {
     let existedMappings = (await UserDataLocalManager.getPDToWorkMapping()) as {
       [key: string]: SavedPDToWorkMapping;
     } | null;
     if (!existedMappings) {
       existedMappings = {};
     }
-    existedMappings[PDId] = { mapping: mapping, lastSaveTime: new Date() };
+    existedMappings[PDId] = { mapping: mapping, lastSaveTime: new Date(), workspaceId: workspaceId };
     if (detectBexEnvironment() === BexEnvironment.Background) {
       await chrome.storage.local.set({ [StorageKey.PDToWorkMapping]: existedMappings });
     } else {
       await chrome.runtime.sendMessage({
         message: 'set-storage',
         data: { key: StorageKey.PDToWorkMapping, value: existedMappings },
+      });
+    }
+  }
+
+  static async getAccessTokenWithWorkspaces(
+    botId: string | undefined = undefined,
+    workspaceId: string | undefined = undefined
+  ): Promise<{ [key: string]: NAccessTokenWithWorkspace } | NAccessTokenWithWorkspace | null> {
+    let accessTokenWithWorkspaces: { [key: string]: NAccessTokenWithWorkspace };
+    if (detectBexEnvironment() === BexEnvironment.Background) {
+      accessTokenWithWorkspaces = (await chrome.storage.local.get([StorageKey.AccessTokenWithWorkspace]))?.[
+        StorageKey.AccessTokenWithWorkspace
+      ];
+    } else {
+      accessTokenWithWorkspaces = await chrome.runtime.sendMessage({
+        message: 'get-storage',
+        data: { key: StorageKey.AccessTokenWithWorkspace },
+      });
+    }
+    if (!accessTokenWithWorkspaces) {
+      return null;
+    }
+    if (botId) {
+      return botId in accessTokenWithWorkspaces ? accessTokenWithWorkspaces[botId] : null;
+    }
+    if (workspaceId) {
+      const accessTokenWithWorkspace = _.find(
+        Object.values(accessTokenWithWorkspaces),
+        (value) => value.workspace_id === workspaceId
+      );
+      return accessTokenWithWorkspace ? accessTokenWithWorkspace : null;
+    }
+    return accessTokenWithWorkspaces;
+  }
+
+  /**
+   * 保存下来的数据格式是 {bot_id1: NAccessTokenWithWorkspace1, bot_id2: NAccessTokenWithWorkspace2}
+   * 之所以使用 bot_id 为 key，是因为这是 notion 文档推荐的做法。虽然尚不确定为何这么推荐
+   */
+  static async saveAccessTokenWithWorkSpace(accessTokenWithWorkspace: NAccessTokenWithWorkspace) {
+    let accessTokenWithWorkspaces = (await UserDataLocalManager.getAccessTokenWithWorkspaces()) as {
+      [key: string]: NAccessTokenWithWorkspace;
+    } | null;
+    if (!accessTokenWithWorkspaces) {
+      accessTokenWithWorkspaces = {};
+    }
+    accessTokenWithWorkspaces[accessTokenWithWorkspace.bot_id] = accessTokenWithWorkspace;
+    if (detectBexEnvironment() === BexEnvironment.Background) {
+      await chrome.storage.local.set({ [StorageKey.AccessTokenWithWorkspace]: accessTokenWithWorkspaces });
+    } else {
+      await chrome.runtime.sendMessage({
+        message: 'set-storage',
+        data: { key: StorageKey.AccessTokenWithWorkspace, value: accessTokenWithWorkspaces },
       });
     }
   }

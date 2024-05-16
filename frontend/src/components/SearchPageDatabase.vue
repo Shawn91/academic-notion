@@ -7,8 +7,9 @@
   还能获取到关键字，所以需要一个 titleQuery 变量，每当搜索框内容变化时（即调用 filter 函数时），更新 titleQuery
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import {
+  NAccessTokenWithWorkspace,
   NPDInfo,
   NProperty,
   PDToWorkMapping,
@@ -19,7 +20,9 @@ import {
 import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
 import { isCompatiblePDPropertyType } from 'src/services/database-work-mapping';
-
+import NotionAuth from 'components/NotionAuth.vue';
+import { a } from 'vitest/dist/suite-IbNSsUWN';
+import { UserDataLocalManager } from 'src/services/user-data-manager';
 // 用于在 q-select 中提示用户，本程序支持哪些文献属性
 const DisplayedWorkProperties: {
   label: string;
@@ -149,11 +152,14 @@ const DisplayedWorkProperties: {
 ];
 
 const emit = defineEmits(['update-PD-info']);
-
+const isLoggedIn = ref(false);
 const existedPDInfo = defineModel<{ [p: string]: NPDInfo }>('existedPDInfo', { default: {} });
 // 用户使用关键词搜索 page 或 database 后，选中的那一个的 schema 会存储为 selectedPDId
 const selectedPDId = defineModel<string | undefined>('selectedPDId', { default: undefined });
 const selectedPDInfo = computed(() => (selectedPDId.value ? existedPDInfo.value[selectedPDId.value] : undefined));
+const selectedWorkspaceId = defineModel<string | undefined>('selectedWorkspaceId', { default: undefined });
+const accessTokenWithWorkspaces = ref<NAccessTokenWithWorkspace[] | undefined>(undefined);
+
 const props = defineProps<{
   platform: Platform | undefined;
 }>();
@@ -185,10 +191,10 @@ const selectedPDMapToWork = ref<PDToWorkMapping>(
 const qSelectComponent = ref<QSelect | null>(null);
 let titleQuery = ''; // 用于搜索page或database的关键字
 
-const filteredPDOptions = ref(Object.values(existedPDInfo.value));
+const filteredPDOptions = ref<NPDInfo[]>([]);
 
 watch(existedPDInfo, (newValue) => {
-  filteredPDOptions.value = Object.values(newValue);
+  updateFilteredPDOptions();
 });
 
 watch(selectedPDId, (newValue) => {
@@ -199,7 +205,31 @@ watch(selectedPDId, (newValue) => {
 watch(existedPDToWorkMappings, (newValue) => {
   selectedPDMapToWork.value =
     selectedPDId.value && selectedPDId.value in newValue ? newValue[selectedPDId.value]['mapping'] : {};
+  updateFilteredPDOptions();
 });
+
+watch(selectedWorkspaceId, (newValue) => {
+  updateFilteredPDOptions();
+});
+
+watch(accessTokenWithWorkspaces, (newValue) => {
+  isLoggedIn.value = newValue !== undefined && newValue.length > 0;
+});
+
+/**
+ * 控制搜索数据库的搜索框的下拉列表中的选项
+ */
+function updateFilteredPDOptions() {
+  if (selectedWorkspaceId.value && existedPDInfo.value && Object.keys(existedPDToWorkMappings.value).length > 0) {
+    // 当前选中的 workspace 在过往保存过的数据库的 id 集合
+    const PDIdsOfWorkspace = Object.entries(existedPDToWorkMappings.value)
+      .filter(([_, mapping]) => mapping.workspaceId === selectedWorkspaceId.value)
+      .map(([id, _]) => id);
+    filteredPDOptions.value = Object.values(existedPDInfo.value).filter((pdInfo) =>
+      PDIdsOfWorkspace.includes(pdInfo.id)
+    );
+  }
+}
 
 function filterByTitle(val: string, update: (arg0: () => void) => void) {
   update(() => {
@@ -218,7 +248,7 @@ function searchByTitle() {
   chrome.runtime.sendMessage(
     {
       message: 'fetch-pages-databases',
-      data: { query: titleQuery },
+      data: { query: titleQuery, workspaceId: selectedWorkspaceId.value as string },
     },
     function (res: Response<NPDInfo[]>) {
       if (res.success) {
@@ -230,7 +260,7 @@ function searchByTitle() {
         // 候选的数据库列表变化了，相应地 existedPDToWorkMappings 也要变化
         Object.keys(existedPDInfo.value).forEach((PDId: string) => {
           if (PDId in existedPDToWorkMappings.value) return;
-          existedPDToWorkMappings.value[PDId] = { mapping: {} };
+          existedPDToWorkMappings.value[PDId] = { mapping: {}, workspaceId: selectedWorkspaceId.value as string };
         });
         nextTick(() => {
           qSelectComponent.value?.showPopup();
@@ -249,7 +279,10 @@ function handlePDSelection(pdId: string) {
     selectedPDMapToWork.value = existedPDToWorkMappings.value[pdId]['mapping'] as PDToWorkMapping;
   } else {
     selectedPDMapToWork.value = {};
-    existedPDToWorkMappings.value[pdId] = { mapping: selectedPDMapToWork.value };
+    existedPDToWorkMappings.value[pdId] = {
+      mapping: selectedPDMapToWork.value,
+      workspaceId: selectedWorkspaceId.value as string,
+    };
   }
 }
 
@@ -266,40 +299,87 @@ function handleWorkPropertySelection(
     workPropertyLabel: workPropertyLabel,
   };
 }
+
+/**
+ * 用户重新设置了授权，需要重新获取 accessTokenWithWorkspaces
+ */
+function handleAuth() {
+  UserDataLocalManager.getAccessTokenWithWorkspaces().then((accessTokenWithWorkspacesObj) => {
+    if (accessTokenWithWorkspacesObj) {
+      accessTokenWithWorkspaces.value = Array.from(Object.values(accessTokenWithWorkspacesObj));
+    }
+  });
+}
+
+onMounted(() => {
+  // 读取 local storage 中的 accessTokenWithWorkspaces
+  UserDataLocalManager.getAccessTokenWithWorkspaces().then((accessTokenWithWorkspacesObj) => {
+    if (accessTokenWithWorkspacesObj) {
+      accessTokenWithWorkspaces.value = Array.from(Object.values(accessTokenWithWorkspacesObj));
+    }
+  });
+});
 </script>
 
 <template>
   <div>
-    <q-select
-      ref="qSelectComponent"
-      v-model="selectedPDId"
-      :options="filteredPDOptions"
-      use-input
-      rounded
-      outlined
-      input-debounce="0"
-      :option-value="(opt:NPDInfo) => opt.id"
-      :option-label="(opt:NPDInfo) => opt['title']?.[0]?.['plain_text']"
-      map-options
-      emit-value
-      use-chips
-      @filter="filterByTitle"
-      label="Search for a database to upload to"
-      @update:model-value="handlePDSelection"
-    >
-      <template v-slot:prepend>
-        <q-icon name="mdi-database-search-outline" />
-      </template>
-      <template v-slot:after>
-        <q-btn round dense flat icon="mdi-magnify" size="1em" @click="searchByTitle" />
-      </template>
-    </q-select>
     <div class="flex row justify-between">
-      <p class="text-caption q-mt-xs text-wrap">
-        If you don't see your database in the dropdown, please click the Magnifier icon.
+      <div class="col-auto">
+        <notion-auth
+          :label="isLoggedIn ? 'Authorize Databases' : 'Log in to Proceed'"
+          @auth-success="handleAuth"
+        ></notion-auth>
+      </div>
+      <div class="col-3">
+        <q-select
+          v-model="selectedWorkspaceId"
+          :disable="!isLoggedIn"
+          :options="accessTokenWithWorkspaces"
+          :option-label="(opt:NAccessTokenWithWorkspace) => opt.workspace_name"
+          :option-value="(opt:NAccessTokenWithWorkspace) => opt.workspace_id"
+          map-options
+          emit-value
+        ></q-select>
+      </div>
+      <div class="col-6">
+        <q-select
+          :disable="!isLoggedIn || !selectedWorkspaceId"
+          ref="qSelectComponent"
+          v-model="selectedPDId"
+          :options="filteredPDOptions"
+          use-input
+          rounded
+          outlined
+          input-debounce="0"
+          :option-value="(opt:NPDInfo) => opt.id"
+          :option-label="(opt:NPDInfo) => opt['title']?.[0]?.['plain_text']"
+          map-options
+          emit-value
+          use-chips
+          @filter="filterByTitle"
+          label="Search for a database to upload to"
+          @update:model-value="handlePDSelection"
+        >
+          <template v-slot:prepend>
+            <q-icon name="mdi-database-search-outline" />
+          </template>
+          <template v-slot:after>
+            <q-btn round dense flat icon="mdi-magnify" size="1em" @click="searchByTitle" />
+          </template>
+        </q-select>
+      </div>
+    </div>
+    <div class="flex row justify-between">
+      <p style="width: 70%" class="text-caption q-mt-xs text-wrap">
+        If you don't see your database in the dropdown, please enter the name of the database in the search bar and
+        click the Magnifier icon.
       </p>
-      <p class="cursor-pointer text-deep-purple text-body2 q-mt-xs" @click="emit('update-PD-info')">
-        <a><u>Get latest database columns</u></a>
+      <p
+        v-show="selectedPDId"
+        class="cursor-pointer text-deep-purple text-body2 q-mt-xs"
+        @click="emit('update-PD-info')"
+      >
+        <a><u>Refresh database columns</u></a>
       </p>
     </div>
     <div class="q-mt-lg">

@@ -2,7 +2,7 @@ import { bexBackground } from 'quasar/wrappers';
 import { ArxivScraper } from 'src/services/scrapers';
 import { fetchPageDatabaseByID, searchPageDatabaseByTitle, uploadWorks } from 'src/services/api';
 import { Work } from 'src/models/models';
-import { UserAuthManager } from 'src/services/user-data-manager';
+import { UserAuthManager, UserDataLocalManager } from 'src/services/user-data-manager';
 
 function createNewWindow(): Promise<chrome.windows.Window> {
   return new Promise((resolve, reject) => {
@@ -80,19 +80,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.message == 'fetch-pages-databases') {
     // 根据关键字搜索数
     if (request.data.query) {
-      searchPageDatabaseByTitle(request.data.query).then((res) => {
-        sendResponse(res);
-      });
+      UserDataLocalManager.getAccessTokenWithWorkspaces(undefined, request.data.workspaceId).then(
+        (accessTokenWithWorkspace) => {
+          searchPageDatabaseByTitle(request.data.query, accessTokenWithWorkspace?.access_token as string).then(
+            (res) => {
+              sendResponse(res);
+            }
+          );
+        }
+      );
     } else if (request.data.id) {
       // 根据 id 直接获取该 page/database 的最新信息
-      fetchPageDatabaseByID(request.data.id, request.data.PDType).then((res) => {
-        sendResponse(res);
-      });
+      UserDataLocalManager.getAccessTokenWithWorkspaces(undefined, request.data.workspaceId).then(
+        (accessTokenWithWorkspace) => {
+          fetchPageDatabaseByID(
+            request.data.id,
+            request.data.PDType,
+            accessTokenWithWorkspace?.access_token as string
+          ).then((res) => {
+            sendResponse(res);
+          });
+        }
+      );
     }
   } else if (request.message == 'upload-works') {
-    uploadWorks(request.data['pageDatabase'], request.data['works'], request.data['databaseToWorkMapping']).then(
-      (res) => {
-        sendResponse(res);
+    UserDataLocalManager.getAccessTokenWithWorkspaces(undefined, request.data['workspaceId']).then(
+      (accessTokenWithWorkspace) => {
+        uploadWorks(
+          request.data['pageDatabase'],
+          request.data['works'],
+          request.data['databaseToWorkMapping'],
+          accessTokenWithWorkspace?.access_token as string
+        ).then((res) => {
+          sendResponse(res);
+        });
       }
     );
   } else if (request.message == 'set-storage') {
@@ -103,7 +124,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.storage.local.get([request.data['key']], (items) => {
       sendResponse(items[request.data['key']]);
     });
-  } else if (request.message == 'log-in') {
+  } else if (request.message == 'notion-auth') {
     UserAuthManager.notionAuth().then(() => {
       sendResponse(true);
     });

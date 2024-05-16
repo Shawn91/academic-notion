@@ -16,6 +16,7 @@ const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文
 const existedPDToWorkMappings = ref<{ [key: string]: SavedPDToWorkMapping }>({});
 const selectedWorks = ref<Work[]>([]); // 选中的文献
 let selectedPDId = ref<string | undefined>(undefined);
+let selectedWorkspaceId = ref<string | undefined>(undefined);
 // 当前 popup page 是分为了多页，当前展示第几页
 let pageNum = ref('page-1');
 
@@ -39,6 +40,7 @@ async function uploadWorks() {
       works: selectedWorks.value,
       pageDatabase: existedPDInfo.value[selectedPDId.value],
       databaseToWorkMapping: existedPDToWorkMappings.value[selectedPDId.value]['mapping'],
+      workspaceId: selectedWorkspaceId.value,
     },
     message: 'upload-works',
   });
@@ -66,7 +68,8 @@ async function updatePDInfo() {
   await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
   await UserDataLocalManager.savePDToWorkMapping(
     selectedPDId.value as string,
-    existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
+    existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping,
+    selectedWorkspaceId.value as string
   );
 }
 
@@ -84,14 +87,15 @@ async function handleUploadWorkButtonClicked() {
   const selectedPDLatestInfo: NPDInfo = (
     await chrome.runtime.sendMessage({
       message: 'fetch-pages-databases',
-      data: { id: selectedPDId.value, PDType: 'database' },
+      data: { id: selectedPDId.value, PDType: 'database', workspaceId: selectedWorkspaceId.value },
     })
   ).data;
   const selectedPDOldInfo = (await UserDataLocalManager.getPDInfo(selectedPDId.value)) as NPDInfo;
   if (areSameProperties(selectedPDLatestInfo.properties, selectedPDOldInfo?.properties)) {
     await UserDataLocalManager.savePDToWorkMapping(
       selectedPDId.value as string,
-      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
+      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping,
+      selectedWorkspaceId.value as string
     );
     await uploadWorks(); // 一致，直接上传文献
   } else {
@@ -106,7 +110,8 @@ async function handleUploadWorkButtonClicked() {
     await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
     await UserDataLocalManager.savePDToWorkMapping(
       selectedPDId.value as string,
-      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
+      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping,
+      selectedWorkspaceId.value as string
     );
   }
 }
@@ -136,6 +141,7 @@ onBeforeMount(async () => {
     );
     if (lastSavedPDIdAndMapping) {
       selectedPDId.value = lastSavedPDIdAndMapping[0];
+      selectedWorkspaceId.value = lastSavedPDIdAndMapping[1]['workspaceId'];
     }
   }
 });
@@ -162,7 +168,13 @@ onBeforeMount(async () => {
         </div>
       </div>
       <div class="footer-button-group flex justify-end q-mt-sm">
-        <q-btn color="secondary" class="q-ml-md" label="Next" @click="pageNum = 'page-2'" />
+        <q-btn
+          color="secondary"
+          class="q-ml-md"
+          label="Next"
+          @click="pageNum = 'page-2'"
+          :disable="selectedWorks.length === 0"
+        />
       </div>
     </div>
   </div>
@@ -172,6 +184,7 @@ onBeforeMount(async () => {
         v-model:existedPDInfo="existedPDInfo"
         v-model:selectedPDId="selectedPDId"
         v-model:existedPDToWorkMappings="existedPDToWorkMappings"
+        v-model:selectedWorkspaceId="selectedWorkspaceId"
         :platform="works[0]?.['platform']"
         @updatePDInfo="updatePDInfo"
       ></search-page-database>
