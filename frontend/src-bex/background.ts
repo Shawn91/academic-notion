@@ -82,11 +82,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.data.query) {
       UserDataLocalManager.getAccessTokenWithWorkspaces(undefined, request.data.workspaceId).then(
         (accessTokenWithWorkspace) => {
-          searchPageDatabaseByTitle(request.data.query, accessTokenWithWorkspace?.access_token as string).then(
-            (res) => {
-              sendResponse(res);
-            }
-          );
+          searchPageDatabaseByTitle(
+            request.data.query,
+            accessTokenWithWorkspace?.access_token as string,
+            request.data.workspaceId
+          ).then((res) => {
+            sendResponse(res);
+          });
         }
       );
     } else if (request.data.id) {
@@ -96,7 +98,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           fetchPageDatabaseByID(
             request.data.id,
             request.data.PDType,
-            accessTokenWithWorkspace?.access_token as string
+            accessTokenWithWorkspace?.access_token as string,
+            request.data.workspaceId
           ).then((res) => {
             sendResponse(res);
           });
@@ -123,6 +126,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.message == 'get-storage') {
     chrome.storage.local.get([request.data['key']], (items) => {
       sendResponse(items[request.data['key']]);
+    });
+  } else if (request.message === 'clear-storage') {
+    chrome.storage.local.clear().then(() => {
+      sendResponse(true);
     });
   } else if (request.message == 'notion-auth') {
     UserAuthManager.notionAuth().then(() => {

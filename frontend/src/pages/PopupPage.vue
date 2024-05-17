@@ -55,7 +55,7 @@ async function updatePDInfo() {
   const selectedPDLatestInfo: NPDInfo = (
     await chrome.runtime.sendMessage({
       message: 'fetch-pages-databases',
-      data: { id: selectedPDId.value, PDType: 'database' },
+      data: { id: selectedPDId.value, PDType: 'database', workspaceId: selectedWorkspaceId.value },
     })
   ).data;
   // 更新展示的数据库列
@@ -68,8 +68,7 @@ async function updatePDInfo() {
   await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
   await UserDataLocalManager.savePDToWorkMapping(
     selectedPDId.value as string,
-    existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping,
-    selectedWorkspaceId.value as string
+    existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
   );
 }
 
@@ -94,8 +93,7 @@ async function handleUploadWorkButtonClicked() {
   if (areSameProperties(selectedPDLatestInfo.properties, selectedPDOldInfo?.properties)) {
     await UserDataLocalManager.savePDToWorkMapping(
       selectedPDId.value as string,
-      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping,
-      selectedWorkspaceId.value as string
+      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
     );
     await uploadWorks(); // 一致，直接上传文献
   } else {
@@ -110,8 +108,7 @@ async function handleUploadWorkButtonClicked() {
     await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
     await UserDataLocalManager.savePDToWorkMapping(
       selectedPDId.value as string,
-      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping,
-      selectedWorkspaceId.value as string
+      existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
     );
   }
 }
@@ -141,7 +138,7 @@ onBeforeMount(async () => {
     );
     if (lastSavedPDIdAndMapping) {
       selectedPDId.value = lastSavedPDIdAndMapping[0];
-      selectedWorkspaceId.value = lastSavedPDIdAndMapping[1]['workspaceId'];
+      selectedWorkspaceId.value = existedPDInfo.value[selectedPDId.value].workspaceId;
     }
   }
 });

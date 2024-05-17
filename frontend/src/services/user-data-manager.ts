@@ -127,7 +127,6 @@ export class UserDataLocalManager {
       mappings[key] = {
         mapping: mappingLiterals[key]['mapping'],
         lastSaveTime: new Date(mappingLiterals[key]['lastSaveTime']),
-        workspaceId: mappingLiterals[key]['workspaceId'],
       };
     });
     if (PDId) {
@@ -141,14 +140,14 @@ export class UserDataLocalManager {
    * {Storage.PDToWorkMapping: {id1: {'mapping': mapping, 'lastSaveTime': date}}}
    * 这里的 id 指的是数据库 id
    */
-  static async savePDToWorkMapping(PDId: string, mapping: PDToWorkMapping, workspaceId: string) {
+  static async savePDToWorkMapping(PDId: string, mapping: PDToWorkMapping) {
     let existedMappings = (await UserDataLocalManager.getPDToWorkMapping()) as {
       [key: string]: SavedPDToWorkMapping;
     } | null;
     if (!existedMappings) {
       existedMappings = {};
     }
-    existedMappings[PDId] = { mapping: mapping, lastSaveTime: new Date(), workspaceId: workspaceId };
+    existedMappings[PDId] = { mapping: mapping, lastSaveTime: new Date() };
     if (detectBexEnvironment() === BexEnvironment.Background) {
       await chrome.storage.local.set({ [StorageKey.PDToWorkMapping]: existedMappings });
     } else {
@@ -209,6 +208,14 @@ export class UserDataLocalManager {
         message: 'set-storage',
         data: { key: StorageKey.AccessTokenWithWorkspace, value: accessTokenWithWorkspaces },
       });
+    }
+  }
+
+  static async clearAllData() {
+    if (detectBexEnvironment() === BexEnvironment.Background) {
+      await chrome.storage.local.clear();
+    } else {
+      await chrome.runtime.sendMessage({ message: 'clear-storage' });
     }
   }
 }

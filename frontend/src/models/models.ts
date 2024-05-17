@@ -34,7 +34,6 @@ export type PDToWorkMapping = {
 export type SavedPDToWorkMapping = {
   mapping: PDToWorkMapping;
   lastSaveTime?: Date;
-  workspaceId: string;
 };
 
 /**

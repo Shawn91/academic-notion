@@ -21,7 +21,6 @@ import { Response } from 'src/services/api';
 import { QSelect } from 'quasar';
 import { isCompatiblePDPropertyType } from 'src/services/database-work-mapping';
 import NotionAuth from 'components/NotionAuth.vue';
-import { a } from 'vitest/dist/suite-IbNSsUWN';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
 // 用于在 q-select 中提示用户，本程序支持哪些文献属性
 const DisplayedWorkProperties: {
@@ -205,7 +204,6 @@ watch(selectedPDId, (newValue) => {
 watch(existedPDToWorkMappings, (newValue) => {
   selectedPDMapToWork.value =
     selectedPDId.value && selectedPDId.value in newValue ? newValue[selectedPDId.value]['mapping'] : {};
-  updateFilteredPDOptions();
 });
 
 watch(selectedWorkspaceId, (newValue) => {
@@ -220,14 +218,14 @@ watch(accessTokenWithWorkspaces, (newValue) => {
  * 控制搜索数据库的搜索框的下拉列表中的选项
  */
 function updateFilteredPDOptions() {
-  if (selectedWorkspaceId.value && existedPDInfo.value && Object.keys(existedPDToWorkMappings.value).length > 0) {
-    // 当前选中的 workspace 在过往保存过的数据库的 id 集合
-    const PDIdsOfWorkspace = Object.entries(existedPDToWorkMappings.value)
-      .filter(([_, mapping]) => mapping.workspaceId === selectedWorkspaceId.value)
-      .map(([id, _]) => id);
-    filteredPDOptions.value = Object.values(existedPDInfo.value).filter((pdInfo) =>
-      PDIdsOfWorkspace.includes(pdInfo.id)
+  if (selectedWorkspaceId.value) {
+    filteredPDOptions.value = Object.values(existedPDInfo.value).filter(
+      (pdInfo) => pdInfo.workspaceId === selectedWorkspaceId.value
     );
+    // options 更新了，如果此时 selectedPDId 有值，需要判断是否在新的 options 内，如果不在，要取消其值
+    if (!filteredPDOptions.value.map((option) => option.id).includes(selectedPDId.value as string)) {
+      selectedPDId.value = undefined;
+    }
   }
 }
 
@@ -236,7 +234,9 @@ function filterByTitle(val: string, update: (arg0: () => void) => void) {
     titleQuery = val;
     const needle = val.toLowerCase();
     filteredPDOptions.value = Object.values(existedPDInfo.value).filter(
-      (pdInfo) => pdInfo.title[0].plain_text.toLowerCase().indexOf(needle) > -1
+      (pdInfo) =>
+        pdInfo.workspaceId === selectedWorkspaceId.value &&
+        pdInfo.title[0].plain_text.toLowerCase().indexOf(needle) > -1
     );
   });
 }
@@ -253,14 +253,20 @@ function searchByTitle() {
     function (res: Response<NPDInfo[]>) {
       if (res.success) {
         selectedPDId.value = undefined;
-        existedPDInfo.value = res.data.reduce<{ [key: string]: NPDInfo }>((acc, cur) => {
-          acc[cur.id] = cur;
-          return acc;
-        }, {});
+        // 每次找到新的数据库后，添加到已有的 existedPDInfo 中（相同 id 的不添加）
+        // 这里采用了完整覆盖 existedPDInfo，而不是新增，这是因为 defineModel 对于 object 数据，
+        // 如果只是通过 obj[newKey]=newVal，无法触发响应式，只能覆盖
+        existedPDInfo.value = {
+          ...res.data.reduce<{ [key: string]: NPDInfo }>((acc, cur) => {
+            acc[cur.id] = cur;
+            return acc;
+          }, {}),
+          ...existedPDInfo.value,
+        };
         // 候选的数据库列表变化了，相应地 existedPDToWorkMappings 也要变化
         Object.keys(existedPDInfo.value).forEach((PDId: string) => {
           if (PDId in existedPDToWorkMappings.value) return;
-          existedPDToWorkMappings.value[PDId] = { mapping: {}, workspaceId: selectedWorkspaceId.value as string };
+          existedPDToWorkMappings.value[PDId] = { mapping: {} };
         });
         nextTick(() => {
           qSelectComponent.value?.showPopup();
@@ -279,10 +285,7 @@ function handlePDSelection(pdId: string) {
     selectedPDMapToWork.value = existedPDToWorkMappings.value[pdId]['mapping'] as PDToWorkMapping;
   } else {
     selectedPDMapToWork.value = {};
-    existedPDToWorkMappings.value[pdId] = {
-      mapping: selectedPDMapToWork.value,
-      workspaceId: selectedWorkspaceId.value as string,
-    };
+    existedPDToWorkMappings.value[pdId] = { mapping: selectedPDMapToWork.value };
   }
 }
 
@@ -311,6 +314,15 @@ function handleAuth() {
   });
 }
 
+function handleLogout() {
+  selectedWorkspaceId.value = undefined;
+  selectedPDId.value = undefined;
+  selectedPDMapToWork.value = {};
+  existedPDToWorkMappings.value = {};
+  existedPDInfo.value = {};
+  UserDataLocalManager.clearAllData();
+}
+
 onMounted(() => {
   // 读取 local storage 中的 accessTokenWithWorkspaces
   UserDataLocalManager.getAccessTokenWithWorkspaces().then((accessTokenWithWorkspacesObj) => {
@@ -323,25 +335,23 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="flex row justify-between">
-      <div class="col-auto">
-        <notion-auth
-          :label="isLoggedIn ? 'Authorize Databases' : 'Log in to Proceed'"
-          @auth-success="handleAuth"
-        ></notion-auth>
-      </div>
-      <div class="col-3">
+    <notion-auth v-model:isLoggedIn="isLoggedIn" @auth-success="handleAuth" @log-out="handleLogout"></notion-auth>
+    <div class="flex row justify-between q-mt-md">
+      <div class="col-4">
         <q-select
           v-model="selectedWorkspaceId"
           :disable="!isLoggedIn"
           :options="accessTokenWithWorkspaces"
           :option-label="(opt:NAccessTokenWithWorkspace) => opt.workspace_name"
           :option-value="(opt:NAccessTokenWithWorkspace) => opt.workspace_id"
+          label="Select Workspace"
           map-options
           emit-value
+          rounded
+          outlined
         ></q-select>
       </div>
-      <div class="col-6">
+      <div class="col-7">
         <q-select
           :disable="!isLoggedIn || !selectedWorkspaceId"
           ref="qSelectComponent"

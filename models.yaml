@@ -292,12 +292,14 @@ components:
         - type
 
     NPDInfo:
-      description: 一个 page 或 database 的 schema 信息
+      description: 一个 page 或 database 的 schema 信息。所有字段的格式都与 Notion API 的返回值保持一致。只有 workspaceId 这个字段是额外添加的，默认情况下， notion api 返回的数据是没有 workspaceId 的 字段
       type: object
       properties:
         id:
           type: string
           description: page 或 database 的 id
+        workspaceId:
+          type: string
         object:
           type: string
           enum: [ page, database ]

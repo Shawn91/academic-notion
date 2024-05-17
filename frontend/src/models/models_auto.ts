@@ -3,6 +3,7 @@
  * Do not make direct changes to the file.
  */
 
+
 export type paths = Record<string, never>;
 
 export type webhooks = Record<string, never>;
@@ -12,19 +13,19 @@ export interface components {
     /** @description 由谁创建或修改 */
     NCreateEditBy: {
       /** @enum {string} */
-      type: 'user';
+      type: "user";
       id: string;
     };
     /** @description 封面图 */
     NCover: {
       /** @enum {string} */
-      type: 'external';
+      type: "external";
       external: Record<string, never>;
     };
     /** @description 图标 */
     NIcon: {
       /** @enum {string} */
-      type: 'emoji';
+      type: "emoji";
       emoji: string;
     };
     NParent: {
@@ -32,7 +33,7 @@ export interface components {
        * @description 这里只列举了目前已知值
        * @enum {string}
        */
-      type: 'workspace' | 'page_id' | 'database_id';
+      type: "workspace" | "page_id" | "database_id";
       workspace?: boolean;
       database_id?: string;
       /** @description 如果 parent 是 page，那么这里就是 page 的 id */
@@ -45,82 +46,21 @@ export interface components {
        * @description 表示这一列是文本、日期、多选等
        * @enum {string}
        */
-      type:
-        | 'checkbox'
-        | 'created_by'
-        | 'created_time'
-        | 'date'
-        | 'email'
-        | 'files'
-        | 'formula'
-        | 'last_edited_by'
-        | 'last_edited_time'
-        | 'multi_select'
-        | 'number'
-        | 'people'
-        | 'phone_number'
-        | 'relation'
-        | 'rich_text'
-        | 'rollup'
-        | 'select'
-        | 'status'
-        | 'title'
-        | 'url';
+      type: "checkbox" | "created_by" | "created_time" | "date" | "email" | "files" | "formula" | "last_edited_by" | "last_edited_time" | "multi_select" | "number" | "people" | "phone_number" | "relation" | "rich_text" | "rollup" | "select" | "status" | "title" | "url";
       /** @description 这一列展示出来的列名 */
       name: string;
       formula?: {
         expression?: string;
       };
-      multi_select?: {
-        /** @enum {string} */
-        color?: 'blue' | 'brown' | 'default' | 'gray' | 'green' | 'orange' | 'pink' | 'purple' | 'red' | 'yellow';
-        id?: string;
-        name?: string;
-      }[];
+      multi_select?: ({
+          /** @enum {string} */
+          color?: "blue" | "brown" | "default" | "gray" | "green" | "orange" | "pink" | "purple" | "red" | "yellow";
+          id?: string;
+          name?: string;
+        })[];
       number?: {
         /** @enum {string} */
-        format?:
-          | 'argentine_peso'
-          | 'baht'
-          | 'australian_dollar'
-          | 'canadian_dollar'
-          | 'chilean_peso'
-          | 'colombian_peso'
-          | 'danish_krone'
-          | 'dirham'
-          | 'dollar'
-          | 'euro'
-          | 'forint'
-          | 'franc'
-          | 'hong_kong_dollar'
-          | 'koruna'
-          | 'krona'
-          | 'leu'
-          | 'lira'
-          | 'mexican_peso'
-          | 'new_taiwan_dollar'
-          | 'new_zealand_dollar'
-          | 'norwegian_krone'
-          | 'number'
-          | 'number_with_commas'
-          | 'percent'
-          | 'philippine_peso'
-          | 'pound'
-          | 'peruvian_sol'
-          | 'rand'
-          | 'real'
-          | 'ringgit'
-          | 'riyal'
-          | 'ruble'
-          | 'rupee'
-          | 'rupiah'
-          | 'shekel'
-          | 'singapore_dollar'
-          | 'uruguayan_peso'
-          | 'yen'
-          | 'yuan'
-          | 'won'
-          | 'zloty';
+        format?: "argentine_peso" | "baht" | "australian_dollar" | "canadian_dollar" | "chilean_peso" | "colombian_peso" | "danish_krone" | "dirham" | "dollar" | "euro" | "forint" | "franc" | "hong_kong_dollar" | "koruna" | "krona" | "leu" | "lira" | "mexican_peso" | "new_taiwan_dollar" | "new_zealand_dollar" | "norwegian_krone" | "number" | "number_with_commas" | "percent" | "philippine_peso" | "pound" | "peruvian_sol" | "rand" | "real" | "ringgit" | "riyal" | "ruble" | "rupee" | "rupiah" | "shekel" | "singapore_dollar" | "uruguayan_peso" | "yen" | "yuan" | "won" | "zloty";
       };
       relation?: {
         database_id?: string;
@@ -129,31 +69,7 @@ export interface components {
       };
       rollup?: {
         /** @enum {string} */
-        function?:
-          | 'average'
-          | 'checked'
-          | 'count_per_group'
-          | 'count'
-          | 'count_values'
-          | 'date_range'
-          | 'earliest_date'
-          | 'empty'
-          | 'latest_date'
-          | 'max'
-          | 'median'
-          | 'min'
-          | 'not_empty'
-          | 'percent_checked'
-          | 'percent_empty'
-          | 'percent_not_empty'
-          | 'percent_per_group'
-          | 'percent_unchecked'
-          | 'range'
-          | 'unchecked'
-          | 'unique'
-          | 'show_original'
-          | 'show_unique'
-          | 'sum';
+        function?: "average" | "checked" | "count_per_group" | "count" | "count_values" | "date_range" | "earliest_date" | "empty" | "latest_date" | "max" | "median" | "min" | "not_empty" | "percent_checked" | "percent_empty" | "percent_not_empty" | "percent_per_group" | "percent_unchecked" | "range" | "unchecked" | "unique" | "show_original" | "show_unique" | "sum";
         relation_property_id?: string;
         relation_property_name?: string;
         rollup_property_id?: string;
@@ -161,26 +77,26 @@ export interface components {
       };
       select?: {
         /** @enum {string} */
-        color?: 'blue' | 'brown' | 'default' | 'gray' | 'green' | 'orange' | 'pink' | 'purple' | 'red' | 'yellow';
+        color?: "blue" | "brown" | "default" | "gray" | "green" | "orange" | "pink" | "purple" | "red" | "yellow";
         id?: string;
         name?: string;
       };
       status?: {
-        options?: {
-          /** @enum {string} */
-          color?: 'blue' | 'brown' | 'default' | 'gray' | 'green' | 'orange' | 'pink' | 'purple' | 'red' | 'yellow';
-          id?: string;
-          /** @description Commas (",") are not valid for status values. */
-          name?: string;
-        }[];
-        groups?: {
-          /** @enum {string} */
-          color?: 'blue' | 'brown' | 'default' | 'gray' | 'green' | 'orange' | 'pink' | 'purple' | 'red' | 'yellow';
-          id?: string;
-          /** @description Commas (",") are not valid for status values. */
-          name?: string;
-          option_ids?: string[];
-        }[];
+        options?: ({
+            /** @enum {string} */
+            color?: "blue" | "brown" | "default" | "gray" | "green" | "orange" | "pink" | "purple" | "red" | "yellow";
+            id?: string;
+            /** @description Commas (",") are not valid for status values. */
+            name?: string;
+          })[];
+        groups?: ({
+            /** @enum {string} */
+            color?: "blue" | "brown" | "default" | "gray" | "green" | "orange" | "pink" | "purple" | "red" | "yellow";
+            id?: string;
+            /** @description Commas (",") are not valid for status values. */
+            name?: string;
+            option_ids?: string[];
+          })[];
       };
     };
     /** @description 文本样式注解。目前已知的应用场景是 Page 或 Database 的 title 的样式 */
@@ -191,26 +107,7 @@ export interface components {
       underline: boolean;
       code: boolean;
       /** @enum {string} */
-      color:
-        | 'blue'
-        | 'blue_background'
-        | 'brown'
-        | 'brown_background'
-        | 'default'
-        | 'gray'
-        | 'gray_background'
-        | 'green'
-        | 'green_background'
-        | 'orange'
-        | 'orange_background'
-        | 'pink'
-        | 'pink_background'
-        | 'purple'
-        | 'purple_background'
-        | 'red'
-        | 'red_background'
-        | 'yellow'
-        | 'yellow_background';
+      color: "blue" | "blue_background" | "brown" | "brown_background" | "default" | "gray" | "gray_background" | "green" | "green_background" | "orange" | "orange_background" | "pink" | "pink_background" | "purple" | "purple_background" | "red" | "red_background" | "yellow" | "yellow_background";
     };
     /** @description one of the three types of rich text */
     NTextLink: {
@@ -221,7 +118,7 @@ export interface components {
     /** @description one of the three types of rich text */
     NMention: {
       /** @enum {string} */
-      type?: 'database' | 'date' | 'link_preview' | 'page' | 'template_mention' | 'user';
+      type?: "database" | "date" | "link_preview" | "page" | "template_mention" | "user";
       database?: {
         id?: string;
       };
@@ -237,16 +134,16 @@ export interface components {
       };
       template_mention?: {
         /** @enum {string} */
-        type?: 'template_mention_date' | 'template_mention_user';
+        type?: "template_mention_date" | "template_mention_user";
         /** @enum {string} */
-        template_mention_date?: 'today' | 'now';
+        template_mention_date?: "today" | "now";
         /** @enum {string} */
-        template_mention_user?: 'me';
+        template_mention_user?: "me";
       };
       user?: {
         id?: string;
         /** @enum {string} */
-        object?: 'user';
+        object?: "user";
       };
     };
     /** @description one of the three types of rich text */
@@ -255,33 +152,34 @@ export interface components {
     };
     /** @description Page 或 Database 的 title 也是 RichText */
     NRichText: {
-      annotations: components['schemas']['NAnnotations'];
+      annotations: components["schemas"]["NAnnotations"];
       href?: string | null;
       plain_text: string;
-      text?: components['schemas']['NTextLink'];
-      mention?: components['schemas']['NMention'];
-      equation?: components['schemas']['NEquation'];
+      text?: components["schemas"]["NTextLink"];
+      mention?: components["schemas"]["NMention"];
+      equation?: components["schemas"]["NEquation"];
       /** @enum {string} */
-      type: 'text' | 'mention' | 'equation';
+      type: "text" | "mention" | "equation";
     };
-    /** @description 一个 page 或 database 的 schema 信息 */
+    /** @description 一个 page 或 database 的 schema 信息。所有字段的格式都与 Notion API 的返回值保持一致。只有 workspaceId 这个字段是额外添加的，默认情况下， notion api 返回的数据是没有 workspaceId 的 字段 */
     NPDInfo: {
       /** @description page 或 database 的 id */
       id: string;
+      workspaceId?: string;
       /** @enum {string} */
-      object: 'page' | 'database';
+      object: "page" | "database";
       created_time: string;
       last_edited_time: string;
-      created_by: components['schemas']['NCreateEditBy'];
-      last_edited_by: components['schemas']['NCreateEditBy'];
-      cover?: components['schemas']['NCover'];
-      icon?: components['schemas']['NIcon'];
-      parent: components['schemas']['NParent'];
+      created_by: components["schemas"]["NCreateEditBy"];
+      last_edited_by: components["schemas"]["NCreateEditBy"];
+      cover?: components["schemas"]["NCover"];
+      icon?: components["schemas"]["NIcon"];
+      parent: components["schemas"]["NParent"];
       archived: boolean;
       in_trash: boolean;
       /** @description 一个 dict，key 是展示出来的列名（即 Property.name），value 是 Property */
       properties: {
-        [key: string]: components['schemas']['NProperty'];
+        [key: string]: components["schemas"]["NProperty"];
       };
       /** @description 内容尚不详 */
       description: Record<string, never>[];
@@ -289,20 +187,20 @@ export interface components {
       is_inline: boolean;
       public_url?: string | null;
       /** @description database 的 title。尚不清楚为何返回的是一个 list */
-      title: components['schemas']['NRichText'][];
+      title: components["schemas"]["NRichText"][];
       url?: string | null;
     };
-    /** @description NAccessTokenWithWorkspace 中 owner 字段两个值之一 */
+    /** @description NAccessToken 中 owner 字段两个值之一 */
     NAccessTokenOwnerUser: {
       /** @enum {string} */
-      type?: 'user';
+      type?: "user";
       user?: {
         id?: string;
         /** @enum {string} */
-        object?: 'user';
+        object?: "user";
       };
     };
-    /** @description NAccessTokenWithWorkspace 中 owner 字段两个值之一 */
+    /** @description NAccessToken 中 owner 字段两个值之一 */
     NAccessTokenOwnerWorkspace: {
       /** @enum {boolean} */
       workspace?: true;
@@ -317,43 +215,13 @@ export interface components {
       /** @description 如果用户选择使用开发者提供的模板，那么该字段会是用户使用该模板创建的 page/database 的 id */
       duplicated_template_id?: string;
       request_id: string;
-      owner: components['schemas']['NAccessTokenOwnerUser'] | components['schemas']['NAccessTokenOwnerWorkspace'];
+      owner: components["schemas"]["NAccessTokenOwnerUser"] | components["schemas"]["NAccessTokenOwnerWorkspace"];
     };
     /**
      * @description 是书、会议论文、期刊论文、还是别的类型。主要内容来自 crossref.org 的论文类型，https://api.crossref.org/v1/types。
      * @enum {string}
      */
-    WorkType:
-      | 'book-section'
-      | 'monograph'
-      | 'report-component'
-      | 'report'
-      | 'peer-review'
-      | 'book-track'
-      | 'journal-article'
-      | 'book-part'
-      | 'other'
-      | 'book'
-      | 'journal-volume'
-      | 'book-set'
-      | 'reference-entry'
-      | 'proceedings-article'
-      | 'journal'
-      | 'component'
-      | 'book-chapter'
-      | 'proceedings-series'
-      | 'report-series'
-      | 'proceedings'
-      | 'database'
-      | 'standard'
-      | 'reference-book'
-      | 'posted-content'
-      | 'journal-issue'
-      | 'dissertation'
-      | 'grant'
-      | 'dataset'
-      | 'book-series'
-      | 'edited-book';
+    WorkType: "book-section" | "monograph" | "report-component" | "report" | "peer-review" | "book-track" | "journal-article" | "book-part" | "other" | "book" | "journal-volume" | "book-set" | "reference-entry" | "proceedings-article" | "journal" | "component" | "book-chapter" | "proceedings-series" | "report-series" | "proceedings" | "database" | "standard" | "reference-book" | "posted-content" | "journal-issue" | "dissertation" | "grant" | "dataset" | "book-series" | "edited-book";
     /** @description 内容主要来自 crossref.org 的 DOI 数据。出版日期取自其 issued 字段 */
     PublishInfo: {
       publisher?: string;
@@ -392,19 +260,19 @@ export interface components {
      * @description 从哪个平台获取到的文献。不是该文献的来源，而是从哪个平台获取到的
      * @enum {string}
      */
-    Platform: 'arXiv' | 'GoogleScholar';
+    Platform: "arXiv" | "GoogleScholar";
     Work: {
       title?: string;
       /** @description 副标题 */
       subtitle?: string;
-      authors?: components['schemas']['Author'][];
+      authors?: components["schemas"]["Author"][];
       abstract?: string;
       /** @description 论文核心亮点。部分论文有 */
       highlights?: string[];
       /** @description 所属领域。对应 arxiv 的 category 字段 */
       subjects?: string[];
       DOI?: string;
-      platform?: components['schemas']['Platform'];
+      platform?: components["schemas"]["Platform"];
       platformId?: string;
       /**
        * Format: uri
@@ -413,15 +281,15 @@ export interface components {
       url?: string;
       /** @description 作者添加的注释，一般包含的内容：论文有多少页；相关数据可以在哪下载；等等 */
       authorComments?: string[];
-      publishInfo?: components['schemas']['PublishInfo'];
+      publishInfo?: components["schemas"]["PublishInfo"];
       /** @description 被引用次数 */
       referencedByCount?: number;
-      type?: components['schemas']['WorkType'];
+      type?: components["schemas"]["WorkType"];
       ISBN?: string[];
-      digitalResources?: components['schemas']['DigitalResource'][];
-      clinicalTrial?: components['schemas']['ClinicalTrial'][];
+      digitalResources?: components["schemas"]["DigitalResource"][];
+      clinicalTrial?: components["schemas"]["ClinicalTrial"][];
       /** @description 参考文献 */
-      references?: components['schemas']['Work'][];
+      references?: components["schemas"]["Work"][];
     };
   };
   responses: never;

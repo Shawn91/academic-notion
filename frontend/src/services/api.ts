@@ -17,12 +17,20 @@ export interface Response<T> {
   code: number;
 }
 
-export async function searchPageDatabaseByTitle(query: string, accessToken: string): Promise<Response<NPDInfo[]>> {
-  return (await api.url('/search-by-title').post({
+export async function searchPageDatabaseByTitle(
+  query: string,
+  accessToken: string,
+  workspaceId: string | undefined = undefined
+): Promise<Response<NPDInfo[]>> {
+  const response = (await api.url('/search-by-title').post({
     query: query,
     search_for: 'database',
     access_token: accessToken,
   })) as Response<NPDInfo[]>;
+  if (workspaceId) {
+    response.data.forEach((pd) => (pd.workspaceId = workspaceId));
+  }
+  return response;
 }
 
 export async function uploadWorks(
@@ -46,13 +54,18 @@ export async function uploadWorks(
 export async function fetchPageDatabaseByID(
   id: string,
   PDType: 'page' | 'database' = 'database',
-  accessToken?: string
+  accessToken?: string,
+  workspaceId?: string
 ): Promise<Response<NPDInfo>> {
-  return (await api.url('/page-database/').post({
+  const res = (await api.url('/page-database/').post({
     PDId: id,
     PDType: PDType,
     access_token: accessToken,
   })) as Response<NPDInfo>;
+  if (workspaceId) {
+    res.data.workspaceId = workspaceId;
+  }
+  return res;
 }
 
 /**
