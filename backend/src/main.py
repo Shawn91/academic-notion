@@ -44,7 +44,7 @@ async def upload_works_endpoint(request: Request):
 
 
 @app.post("/search-by-title", response_model=ApiResponse)
-def search_by_title_endpoint(request: SearchByTitleRequest):
+async def search_by_title_endpoint(request: SearchByTitleRequest):
     try:
         result = search_by_title(query=request.query, search_for=request.search_for, access_token=request.access_token)
         if isinstance(result, ErrorResult):
@@ -66,7 +66,7 @@ async def page_database_endpoint(request: Request):
 
 # 如果使用 GET 请求，access token 就要放在 url 中，不够安全，因此使用 POST
 @app.post("/exchange-code-for-token", response_model=ApiResponse)
-def exchange_code_for_token_endpoint(code: str = Body(..., embed=True)):
+async def exchange_code_for_token_endpoint(code: str = Body(..., embed=True)):
     token_result = exchange_code_for_token(code=code)
     if isinstance(token_result, ErrorResult):
         return ApiResponse(success=False, code=token_result.code, message=token_result.message)

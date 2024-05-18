@@ -332,10 +332,17 @@ export class GoogleScholarScraper extends Scraper {
     }
   }
 
+  _extractAbstract(workEle: Element, work: Work) {
+    const abstractEle = workEle.querySelector('.gs_rs');
+    if (abstractEle && abstractEle.textContent) {
+      work['abstract'] = abstractEle.textContent;
+    }
+  }
+
   parseDoc(doc: Document): Promise<Work[]> {
     const works: Work[] = [];
     // 'gs_r' 这个 class 是所有搜索结果的 div container 的 class
-    doc.querySelectorAll('.gs_r').forEach((workEle) => {
+    doc.querySelectorAll('.gs_r.gs_or').forEach((workEle) => {
       const titleEle = workEle.querySelector('.gs_rt a');
       // 文献标题的 url。点击后可能是文献详情页，也可能直接就是文献本身下载地址
       const urlELe = workEle.querySelector('.gs_rt a');
@@ -345,6 +352,7 @@ export class GoogleScholarScraper extends Scraper {
       // 大部分情况下，digitalResourcesEles 没有元素，说明没有下载链接。少部分情况，可能有一个下载链接。
       // 更少情况下，可能有一个下载链接和一个详情页链接
       const digitalResourceEles = workEle.querySelectorAll('.gs_or_ggsm a');
+      const abstractEle = workEle.querySelector('.gs_rs');
       const work: Work = {};
       if (titleEle && titleEle.textContent) {
         work['title'] = titleEle.textContent as string;
@@ -358,6 +366,7 @@ export class GoogleScholarScraper extends Scraper {
       this._extractCitationNum(citationEle, work);
       this._extractAuthorsAndPublishInfo(publishInfoEle, work);
       this._extractDigitalResources(digitalResourceEles, work);
+      this._extractAbstract(workEle, work);
       work['platform'] = 'GoogleScholar';
       works.push(work);
     });

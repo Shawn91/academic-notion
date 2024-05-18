@@ -52,7 +52,7 @@ function generatePDItemValue(
       value = workPropertyValue.toString();
       // @ts-ignore 虽然已经判断了是 array，但是 workPropertyValue.every 这里会报错。疑似是 ts bug，而且要到 5.2 版本才会修复
     } else if (workPropertyValue instanceof Array && workPropertyValue.every((ele) => typeof ele === 'string')) {
-      value = workPropertyValue.join('\n').slice(0, 2000);
+      value = workPropertyValue.join(';\n').slice(0, 2000);
     }
     if (value) {
       return { [t]: [{ text: { content: value } }] };
