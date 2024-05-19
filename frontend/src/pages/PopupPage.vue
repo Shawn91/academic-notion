@@ -8,10 +8,10 @@ import _ from 'lodash';
 import { areSameProperties, updateExistedPDToWorkMapping } from 'src/services/database-work-mapping';
 import WorkTable from 'components/WorkTable.vue';
 import UploadWorkResult from 'components/UploadWorkResult.vue';
-import { Response } from 'src/services/api';
 import { matPublishedWithChanges } from '@quasar/extras/material-icons';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
+const failedUploadWorks = ref<Work[] | null>(null);
 const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文献的数据库的信息
 
 // 存储当前用户选中的 database column 到 work property 的对应关系。
@@ -36,16 +36,31 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
 });
 
-async function uploadWorks() {
-  if (!selectedPDId.value) return;
-  await chrome.runtime.sendMessage({
-    data: {
-      works: selectedWorks.value,
-      pageDatabase: existedPDInfo.value[selectedPDId.value],
-      databaseToWorkMapping: existedPDToWorkMappings.value[selectedPDId.value]['mapping'],
-      workspaceId: selectedWorkspaceId.value,
-    },
-    message: 'upload-works',
+async function uploadWorks(): Promise<Work[]> {
+  return new Promise((resolve, reject) => {
+    if (!selectedPDId.value) {
+      reject({ message: 'Please select a database', data: works });
+      return;
+    }
+
+    chrome.runtime.sendMessage(
+      {
+        data: {
+          works: selectedWorks.value,
+          pageDatabase: existedPDInfo.value[selectedPDId.value],
+          databaseToWorkMapping: existedPDToWorkMappings.value[selectedPDId.value]['mapping'],
+          workspaceId: selectedWorkspaceId.value,
+        },
+        message: 'upload-works',
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          reject(works);
+        } else {
+          resolve(response);
+        }
+      }
+    );
   });
 }
 
@@ -98,7 +113,15 @@ async function handleUploadWorkButtonClicked() {
       selectedPDId.value as string,
       existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
     );
-    await uploadWorks(); // 一致，直接上传文献
+    // 一致，直接上传文献
+    uploadWorks()
+      .then((res) => {
+        failedUploadWorks.value = res;
+      })
+      .catch((err) => {
+        failedUploadWorks.value = err;
+      });
+    pageNum.value = 'page-3';
   } else {
     // 当 selectedPDOldInfo 为 null/undefined 时，说明是第一次上传，不需要提示用户重新设置 mapping。否则需要弹窗提示用户
     showPDInfoOutdatedDialog.value = Boolean(selectedPDOldInfo);
@@ -148,36 +171,35 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <div>
-    <div class="page-container q-pa-md flex column justify-between" v-show="pageNum === 'page-1'">
-      <div id="work-table-container" class="page-container q-mt-sm">
-        <work-table
-          v-if="works.length > 0"
-          :works="works"
-          :platform="works[0]?.['platform']"
-          v-model:selectedWorks="selectedWorks"
-        ></work-table>
-        <div v-else style="width: 60%; height: 100%; align-self: center; position: relative">
-          <q-inner-loading
-            showing
-            label="This message should disappear shortly. If you have enough time to read this entire message, it's because either Academic Notion doesn't support
+  <div class="page-container q-pa-md flex column justify-between" v-show="pageNum === 'page-1'">
+    <div id="work-table-container" class="page-container q-mt-sm">
+      <work-table
+        v-if="works.length > 0"
+        :works="works"
+        :platform="works[0]?.['platform']"
+        v-model:selectedWorks="selectedWorks"
+      ></work-table>
+      <div v-else style="width: 60%; height: 100%; align-self: center; position: relative">
+        <q-inner-loading
+          showing
+          label="This message should disappear shortly. If you have enough time to read this entire message, it's because either Academic Notion doesn't support
               this website or something may have gone wrong."
-            label-class="text-teal"
-            label-style="font-size: 1.1em"
-          />
-        </div>
-      </div>
-      <div class="footer-button-group flex justify-end q-mt-sm">
-        <q-btn
-          color="secondary"
-          class="q-ml-md"
-          label="Next"
-          @click="pageNum = 'page-2'"
-          :disable="selectedWorks.length === 0"
+          label-class="text-teal"
+          label-style="font-size: 1.1em"
         />
       </div>
     </div>
+    <div class="footer-button-group flex justify-end q-mt-sm">
+      <q-btn
+        color="secondary"
+        class="q-ml-md"
+        label="Next"
+        @click="pageNum = 'page-2'"
+        :disable="selectedWorks.length === 0"
+      />
+    </div>
   </div>
+
   <div class="page-container q-pa-md flex column justify-between no-wrap" v-show="pageNum === 'page-2'">
     <div style="max-width: 800px; width: 100%; align-self: center; flex: 1; overflow-y: auto">
       <search-page-database
@@ -214,6 +236,10 @@ onBeforeMount(async () => {
         </q-card-actions>
       </q-card>
     </q-dialog>
+  </div>
+
+  <div v-show="pageNum === 'page-3'" class="page-container q-pa-md flex column justify-between no-wrap">
+    <upload-work-result v-model:failedUploadWorks="failedUploadWorks"></upload-work-result>
   </div>
 </template>
 

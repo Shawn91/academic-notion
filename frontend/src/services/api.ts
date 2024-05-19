@@ -38,14 +38,14 @@ export async function uploadWorks(
   works: Work[],
   databaseToWorkMapping: PDToWorkMapping,
   accessToken: string
-) {
+): Promise<Response<Work[]>> {
   const uploadData = works.map((work) => {
     return {
       parent: { type: 'database_id', database_id: pageDatabase.id },
       properties: transformFromWorkToPDItem(databaseToWorkMapping, work),
     };
   });
-  return await api.url('/upload-works').post({ access_token: accessToken, data: uploadData });
+  return (await api.url('/upload-works').post({ access_token: accessToken, data: uploadData })) as Response<Work[]>;
 }
 
 /**

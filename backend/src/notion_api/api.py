@@ -28,7 +28,7 @@ Notion API 的信息
 """
 import json
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Any
 
 import httpx
 from notion_client import Client, APIResponseError
@@ -48,6 +48,7 @@ httpx_client = httpx.Client()
 class ErrorResult:
     message: str
     code: int | str
+    data: Any | None = None
 
 
 def search_by_title(
@@ -81,7 +82,9 @@ def upload_works(work_to_database_properties: list[dict], access_token: str) -> 
             results.append(notion.pages.create(**properties, auth=access_token))
         except APIResponseError as error:
             results.append(
-                ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)
+                ErrorResult(
+                    message=json.loads(error.body).get("message", "Notion API error"), code=error.code, data=properties
+                )
             )
     return results
 

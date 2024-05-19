@@ -39,7 +39,7 @@ async def upload_works_endpoint(request: Request):
     request_data = await request.json()
     result = upload_works(request_data["data"], request_data["access_token"])
     # 只返回出错，插入失败的即可
-    result = [r for r in result if isinstance(r, ErrorResult)]
+    result = [r.data for r in result if isinstance(r, ErrorResult)]
     return ApiResponse(success=len(result) == len(request_data["data"]), data=result, code=status.HTTP_200_OK)
 
 

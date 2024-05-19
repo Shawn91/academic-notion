@@ -114,9 +114,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           request.data['works'],
           request.data['databaseToWorkMapping'],
           accessTokenWithWorkspace?.access_token as string
-        ).then((res) => {
-          sendResponse(res);
-        });
+        )
+          .then((res) => {
+            sendResponse(res.data);
+          })
+          .catch(() => {
+            sendResponse(request.data['works']);
+          });
       }
     );
   } else if (request.message == 'set-storage') {
