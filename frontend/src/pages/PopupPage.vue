@@ -7,6 +7,9 @@ import { UserDataLocalManager } from 'src/services/user-data-manager';
 import _ from 'lodash';
 import { areSameProperties, updateExistedPDToWorkMapping } from 'src/services/database-work-mapping';
 import WorkTable from 'components/WorkTable.vue';
+import UploadWorkResult from 'components/UploadWorkResult.vue';
+import { Response } from 'src/services/api';
+import { matPublishedWithChanges } from '@quasar/extras/material-icons';
 
 const works = ref<Work[]>([]); // 当前网页中提取的文献信息
 const existedPDInfo = ref<{ [key: string]: NPDInfo }>({}); // 过往上传过文献的数据库的信息
@@ -199,7 +202,7 @@ onBeforeMount(async () => {
     <q-dialog v-model="showPDInfoOutdatedDialog" persistent>
       <q-card>
         <q-card-section class="items-center column">
-          <q-avatar icon="published_with_changes" color="primary" text-color="white" />
+          <q-avatar :icon="matPublishedWithChanges" color="primary" text-color="white" />
           <span class="q-ml-sm q-mt-md"
             >You have modified your database columns since last upload. Please double-check whether the mapping is
             correct and click the "UPLOAD" button again to proceed.</span

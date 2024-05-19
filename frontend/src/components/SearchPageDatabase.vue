@@ -22,6 +22,8 @@ import { QSelect } from 'quasar';
 import { isCompatiblePDPropertyType } from 'src/services/database-work-mapping';
 import NotionAuth from 'components/NotionAuth.vue';
 import { UserDataLocalManager } from 'src/services/user-data-manager';
+import { mdiDatabaseSearchOutline, mdiInformationOutline, mdiMagnify } from '@quasar/extras/mdi-v7';
+import { matAddLink, matFilterDrama, matInfo, matNewspaper } from '@quasar/extras/material-icons';
 // 用于在 q-select 中提示用户，本程序支持哪些文献属性
 const DisplayedWorkProperties: {
   label: string;
@@ -30,7 +32,7 @@ const DisplayedWorkProperties: {
 }[] = [
   {
     label: 'Basic Info',
-    icon: 'mdi-information-outline',
+    icon: mdiInformationOutline,
     children: [
       {
         label: 'Title',
@@ -61,7 +63,7 @@ const DisplayedWorkProperties: {
   },
   {
     label: 'Publication Info',
-    icon: 'newspaper',
+    icon: matNewspaper,
     children: [
       {
         label: 'DOI',
@@ -107,7 +109,7 @@ const DisplayedWorkProperties: {
   },
   {
     label: 'Citation/Reference Info',
-    icon: 'add_link',
+    icon: matAddLink,
     children: [
       {
         label: 'Citation Count',
@@ -118,7 +120,7 @@ const DisplayedWorkProperties: {
   },
   {
     label: 'Online Access Information',
-    icon: 'filter_drama',
+    icon: matFilterDrama,
     children: [
       {
         label: 'URL',
@@ -139,7 +141,7 @@ const DisplayedWorkProperties: {
   },
   {
     label: 'Other Info',
-    icon: 'info',
+    icon: matInfo,
     children: [
       {
         label: 'Author Comments',
@@ -371,10 +373,10 @@ onMounted(() => {
           @update:model-value="handlePDSelection"
         >
           <template v-slot:prepend>
-            <q-icon name="mdi-database-search-outline" />
+            <q-icon :name="mdiDatabaseSearchOutline" />
           </template>
           <template v-slot:after>
-            <q-btn round dense flat icon="mdi-magnify" size="1em" @click="searchByTitle" />
+            <q-btn round dense flat :icon="mdiMagnify" size="1em" @click="searchByTitle" />
           </template>
         </q-select>
       </div>
