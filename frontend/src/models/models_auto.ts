@@ -190,6 +190,18 @@ export interface components {
       title: components["schemas"]["NRichText"][];
       url?: string | null;
     };
+    NUser: {
+      /** @enum {string} */
+      object?: "user";
+      id?: string;
+      /** @enum {string} */
+      type?: "person";
+      person?: {
+        email?: string;
+      };
+      name?: string;
+      avatar_url?: string;
+    };
     /** @description NAccessToken 中 owner 字段两个值之一 */
     NAccessTokenOwnerUser: {
       /** @enum {string} */
@@ -203,13 +215,14 @@ export interface components {
     /** @description NAccessToken 中 owner 字段两个值之一 */
     NAccessTokenOwnerWorkspace: {
       /** @enum {boolean} */
-      workspace?: true;
+      workspace: true;
     };
     /** @description Notion API 获取 access token 接口的返回值 */
     NAccessToken: {
       access_token: string;
       bot_id: string;
       workspace_id: string;
+      token_type: string;
       workspace_name?: string;
       workspace_icon?: string;
       /** @description 如果用户选择使用开发者提供的模板，那么该字段会是用户使用该模板创建的 page/database 的 id */

@@ -27,17 +27,19 @@ Notion API 的信息
         * 插入成功
 """
 import json
+import string
 from dataclasses import dataclass
 from typing import Literal, Any
 
 import httpx
-from notion_client import Client, APIResponseError
-from notion_client.helpers import collect_paginated_api
+from notion_client import APIResponseError, AsyncClient
+from notion_client.helpers import async_collect_paginated_api
 
 from config import Config
-from models import NPDInfo
+from database.db_client import save_user, save_access_token
+from models import NPDInfo, NUser, NAccessToken
 
-notion = Client(auth=Config.NOTION_SECRET)
+notion = AsyncClient(auth=Config.NOTION_SECRET)
 # 这个 httpx_auth 可以直接作为参数传递给 httpx.Client，这样所有请求都会带上这个 auth。也可以在每次请求时传递。
 # 这个 auth 本质上就是将 username 和 password 拼接后，转换为 base64 字符串，再添加到请求 header 中，这是 http 协议的基础认证方法
 httpx_auth = httpx.BasicAuth(username=Config.NOTION_CLIENT_ID, password=Config.NOTION_SECRET)
@@ -51,7 +53,7 @@ class ErrorResult:
     data: Any | None = None
 
 
-def search_by_title(
+async def search_by_title(
     query: str, search_for: Literal["database", "page"], access_token: str = ""
 ) -> list[NPDInfo] | ErrorResult:
     """根据标题查找 page 或 database"""
@@ -65,7 +67,7 @@ def search_by_title(
     if access_token:
         options["auth"] = access_token
     try:
-        search_results: list[NPDInfo] = collect_paginated_api(
+        search_results: list[NPDInfo] = await async_collect_paginated_api(
             notion.search,
             **options,
         )
@@ -74,12 +76,12 @@ def search_by_title(
         return ErrorResult(message="Notion API error", code=error.status)
 
 
-def upload_works(work_to_database_properties: list[dict], access_token: str) -> list[NPDInfo | ErrorResult]:
+async def upload_works(work_to_database_properties: list[dict], access_token: str) -> list[NPDInfo | ErrorResult]:
     """work_to_database_properties 是已经整理好格式的上传内容，直接将元素传递给 notion.pages.create 即可"""
     results = []
     for properties in work_to_database_properties:
         try:
-            results.append(notion.pages.create(**properties, auth=access_token))
+            results.append(await notion.pages.create(**properties, auth=access_token))
         except APIResponseError as error:
             results.append(
                 ErrorResult(
@@ -89,20 +91,20 @@ def upload_works(work_to_database_properties: list[dict], access_token: str) -> 
     return results
 
 
-def get_page_database_by_id(
+async def get_page_database_by_id(
     pd_id: str, pd_type: Literal["page", "database"], access_token: str
 ) -> NPDInfo | ErrorResult:
     try:
         if pd_type == "page":
-            pd = notion.pages.retrieve(page_id=pd_id, auth=access_token)
+            pd = await notion.pages.retrieve(page_id=pd_id, auth=access_token)
         else:
-            pd = notion.databases.retrieve(database_id=pd_id, auth=access_token)
+            pd = await notion.databases.retrieve(database_id=pd_id, auth=access_token)
         return pd
     except APIResponseError as error:
         return ErrorResult(message=json.loads(error.body).get("message", "Notion API error"), code=error.code)
 
 
-def exchange_code_for_token(code: str) -> str | ErrorResult:
+async def exchange_code_for_token(code: str) -> NAccessToken | ErrorResult:
     """用户通过 notion 的 oauth 登录后，拿到的是一个 code，将这个 code 发送到后端，由后端再次向 notion 获取 access token"""
     token_url = "https://api.notion.com/v1/oauth/token"
     token_data = {
@@ -113,8 +115,24 @@ def exchange_code_for_token(code: str) -> str | ErrorResult:
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
-    response = httpx_client.post(token_url, json=token_data, headers=token_headers, auth=httpx_auth)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(token_url, json=token_data, headers=token_headers, auth=httpx_auth)
     response_json = response.json()
     if response_json.get("error"):  # 有 error 字段说明出错了
         return ErrorResult(message=response_json.get("error_description"), code=400)
-    return response_json
+    try:
+        access_token_model = NAccessToken.parse_obj(response_json)
+    except Exception as e:
+        return ErrorResult(message=str(e), code=500)
+    save_access_token(access_token_model=access_token_model)
+    return access_token_model
+
+
+async def get_user_info(user_id: string, access_token: string) -> NUser | ErrorResult:
+    try:
+        user_dict = await notion.users.retrieve(user_id=user_id, auth=access_token)
+        user_model = NUser.parse_obj(user_dict)
+        save_user(user=user_model)
+        return user_model
+    except APIResponseError as error:
+        return ErrorResult(message=error.body, code=error.status)

@@ -360,6 +360,27 @@ components:
         - is_inline
         - title
 
+    NUser:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [ user ]
+        id:
+          type: string
+        type:
+          type: string
+          enum: [ person ]
+        person:
+          type: object
+          properties:
+            email:
+              type: string
+        name:
+          type: string
+        avatar_url:
+          type: string
+
     NAccessTokenOwnerUser:
       description: NAccessToken 中 owner 字段两个值之一
       type: object
@@ -383,6 +404,8 @@ components:
         workspace:
           type: boolean
           enum: [ true ]
+      required:
+        - workspace
 
     NAccessToken:
       type: object
@@ -393,6 +416,8 @@ components:
         bot_id:
           type: string
         workspace_id:
+          type: string
+        token_type:
           type: string
         workspace_name:
           type: string

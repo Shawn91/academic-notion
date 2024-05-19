@@ -35,8 +35,17 @@ class AccessToken(Base):
     bot_id: Mapped[str] = mapped_column(primary_key=True)
     duplicated_template_id: Mapped[str] = mapped_column(nullable=True)
     # 当 owner 为 user 时，提取 user id
-    owner_user_id: Mapped[str] = mapped_column(index=True, nullable=True)
+    owner_user_id: Mapped[str] = mapped_column(index=True, nullable=True, unique=False)
     token_type: Mapped[str] = mapped_column()
     workspace_icon: Mapped[str] = mapped_column(nullable=True)
     workspace_id: Mapped[str] = mapped_column()
     workspace_name: Mapped[str] = mapped_column(nullable=True)
+
+
+class User(Base):
+    __tablename__ = "user"
+    id: Mapped[str] = mapped_column(primary_key=True)
+    type: Mapped[str | None] = mapped_column(default="person", nullable=True)
+    email: Mapped[str | None] = mapped_column(nullable=True, unique=True)
+    name: Mapped[str | None] = mapped_column(nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(nullable=True)
