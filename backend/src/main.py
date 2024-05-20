@@ -47,7 +47,9 @@ async def upload_works_endpoint(request: Request):
 @app.post("/search-by-title", response_model=ApiResponse)
 async def search_by_title_endpoint(request: SearchByTitleRequest):
     try:
-        result = search_by_title(query=request.query, search_for=request.search_for, access_token=request.access_token)
+        result = await search_by_title(
+            query=request.query, search_for=request.search_for, access_token=request.access_token
+        )
         if isinstance(result, ErrorResult):
             return ApiResponse(success=False, code=status.HTTP_404_NOT_FOUND, message="No results found")
         return ApiResponse(success=True, data=result)
