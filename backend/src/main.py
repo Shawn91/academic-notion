@@ -38,7 +38,7 @@ def create_response(success: bool, data: Any = None, message: str = "", code: in
 async def upload_works_endpoint(request: Request):
     """data 是可以直接传递给 upload_works，符合 notion.create.pages 参数要求的上传数据"""
     request_data = await request.json()
-    result = upload_works(request_data["data"], request_data["access_token"])
+    result = await upload_works(request_data["data"], request_data["access_token"])
     # 只返回出错，插入失败的即可
     result = [r.data for r in result if isinstance(r, ErrorResult)]
     return ApiResponse(success=len(result) == len(request_data["data"]), data=result, code=status.HTTP_200_OK)
@@ -63,7 +63,7 @@ async def page_database_endpoint(request: Request):
     pd_id = request_data["PDId"]
     pd_type = request_data["PDType"]
     access_token = request_data["access_token"]
-    result = get_page_database_by_id(pd_id=pd_id, pd_type=pd_type, access_token=access_token)
+    result = await get_page_database_by_id(pd_id=pd_id, pd_type=pd_type, access_token=access_token)
     return ApiResponse(success=True, data=result)
 
 

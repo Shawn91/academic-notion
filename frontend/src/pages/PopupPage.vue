@@ -107,8 +107,12 @@ async function handleUploadWorkButtonClicked() {
       data: { id: selectedPDId.value, PDType: 'database', workspaceId: selectedWorkspaceId.value },
     })
   ).data;
-  const selectedPDOldInfo = (await UserDataLocalManager.getPDInfo(selectedPDId.value)) as NPDInfo;
-  if (areSameProperties(selectedPDLatestInfo.properties, selectedPDOldInfo?.properties)) {
+  const selectedPDOldInfo = (await UserDataLocalManager.getPDInfo(selectedPDId.value)) as NPDInfo | undefined;
+  if (
+    selectedPDOldInfo === undefined ||
+    areSameProperties(selectedPDLatestInfo.properties, selectedPDOldInfo?.properties)
+  ) {
+    await UserDataLocalManager.savePDInfo(selectedPDLatestInfo);
     await UserDataLocalManager.savePDToWorkMapping(
       selectedPDId.value as string,
       existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping

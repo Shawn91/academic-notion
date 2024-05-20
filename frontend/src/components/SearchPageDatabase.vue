@@ -338,11 +338,10 @@ onMounted(() => {
 <template>
   <div>
     <notion-auth v-model:isLoggedIn="isLoggedIn" @auth-success="handleAuth" @log-out="handleLogout"></notion-auth>
-    <div class="flex row justify-between q-mt-md">
+    <div class="flex row justify-between q-mt-md" v-show="isLoggedIn">
       <div class="col-4">
         <q-select
           v-model="selectedWorkspaceId"
-          :disable="!isLoggedIn"
           :options="accessTokenWithWorkspaces"
           :option-label="(opt:NAccessTokenWithWorkspace) => opt.workspace_name"
           :option-value="(opt:NAccessTokenWithWorkspace) => opt.workspace_id"
@@ -355,7 +354,7 @@ onMounted(() => {
       </div>
       <div class="col-7">
         <q-select
-          :disable="!isLoggedIn || !selectedWorkspaceId"
+          :disable="!selectedWorkspaceId"
           ref="qSelectComponent"
           v-model="selectedPDId"
           :options="filteredPDOptions"
@@ -381,17 +380,33 @@ onMounted(() => {
         </q-select>
       </div>
     </div>
-    <div class="flex row justify-between">
-      <p style="width: 70%" class="text-caption q-mt-xs text-wrap">
-        If you don't see your database in the dropdown, please enter the name of the database in the search bar and
-        click the Magnifier icon.
+    <div class="flex row justify-between" v-show="isLoggedIn">
+      <p class="text-caption q-mt-xs text-wrap">
+        What if you don't see the database you want?
+        <q-tooltip>
+          <p class="text-body1">
+            1. Click the "AUTHORIZE DATABASES" button and select the database you want to upload to.
+          </p>
+          <p class="text-body1">
+            2. Put the name of the target database in the search bar and click the magnifying glass icon.
+          </p>
+        </q-tooltip>
       </p>
       <p
         v-show="selectedPDId"
         class="cursor-pointer text-deep-purple text-body2 q-mt-xs"
         @click="emit('update-PD-info')"
       >
-        <a><u>Refresh database columns</u></a>
+        <a
+          ><u>Refresh database columns</u>
+          <q-icon :name="mdiInformationOutline">
+            <q-tooltip>
+              <p class="text-body1">
+                If you have modified the database since last upload, click here to refresh the table below.
+              </p>
+            </q-tooltip>
+          </q-icon>
+        </a>
       </p>
     </div>
     <div class="q-mt-lg">
