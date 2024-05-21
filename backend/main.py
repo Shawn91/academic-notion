@@ -8,9 +8,9 @@ from fastapi.responses import JSONResponse
 
 sys.path.append(str(Path(__file__).parent.resolve()))
 
-from models import SearchByTitleRequest, ApiResponse
-from config import Config
-from notion_api.api import (
+from src.models import SearchByTitleRequest, ApiResponse
+from src.config import Config
+from src.notion_api.api import (
     search_by_title,
     ErrorResult,
     APIResponseError,

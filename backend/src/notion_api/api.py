@@ -35,9 +35,9 @@ import httpx
 from notion_client import APIResponseError, AsyncClient
 from notion_client.helpers import async_collect_paginated_api
 
-from config import Config
-from database.db_client import save_user, save_access_token
-from models import NPDInfo, NUser, NAccessToken
+from src.config import Config
+from src.database.db_client import save_user, save_access_token
+from src.models import NPDInfo, NUser, NAccessToken
 
 notion = AsyncClient(auth=Config.NOTION_SECRET)
 # 这个 httpx_auth 可以直接作为参数传递给 httpx.Client，这样所有请求都会带上这个 auth。也可以在每次请求时传递。
