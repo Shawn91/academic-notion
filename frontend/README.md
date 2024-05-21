@@ -115,3 +115,8 @@ typescript 导入自动生成的 models 稍微麻烦一点，参考 https://gith
  'workspace_id': 'bcd261e7-7a99-4e9d-8879-d59797d89959',
  'workspace_name': "Yuxiang's Workspace"}
 ```
+# 4. 生成 requirements.txt
+在 backend 目录下运行
+```shell
+poetry export -f requirements.txt -o requirements.txt --without-hashes
+```
