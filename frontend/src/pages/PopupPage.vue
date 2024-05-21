@@ -24,6 +24,7 @@ let selectedWorkspaceId = ref<string | undefined>(undefined);
 let pageNum = ref('page-1');
 
 const showPDInfoOutdatedDialog = ref(false);
+const isUploadingWorks = ref(false);
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.message === 'works') {
@@ -100,6 +101,7 @@ async function updatePDInfo() {
  */
 async function handleUploadWorkButtonClicked() {
   if (!selectedPDId.value) return;
+  isUploadingWorks.value = true;
   // 1. ；远程获取当前选中的 database 的最新的 schema
   const selectedPDLatestInfo: NPDInfo = (
     await chrome.runtime.sendMessage({
@@ -140,6 +142,7 @@ async function handleUploadWorkButtonClicked() {
       selectedPDId.value as string,
       existedPDToWorkMappings.value[selectedPDId.value]['mapping'] as PDToWorkMapping
     );
+    isUploadingWorks.value = false;
   }
 }
 
@@ -221,6 +224,7 @@ onBeforeMount(async () => {
         label="Upload"
         :disable="selectedWorks.length === 0"
         @click="handleUploadWorkButtonClicked"
+        :loading="isUploadingWorks"
       />
       <q-btn color="secondary" class="q-ml-md" label="Back" @click="pageNum = 'page-1'" />
     </div>

@@ -161,6 +161,9 @@ const selectedPDInfo = computed(() => (selectedPDId.value ? existedPDInfo.value[
 const selectedWorkspaceId = defineModel<string | undefined>('selectedWorkspaceId', { default: undefined });
 const accessTokenWithWorkspaces = ref<NAccessTokenWithWorkspace[] | undefined>(undefined);
 
+// 当前是否正在搜索 notion 数据库
+const isSearchingDatabase = ref(false);
+
 const props = defineProps<{
   platform: Platform | undefined;
 }>();
@@ -247,6 +250,7 @@ function filterByTitle(val: string, update: (arg0: () => void) => void) {
  * 根据标题搜索 pages 或 databases
  */
 function searchByTitle() {
+  isSearchingDatabase.value = true;
   chrome.runtime.sendMessage(
     {
       message: 'fetch-pages-databases',
@@ -274,6 +278,7 @@ function searchByTitle() {
           qSelectComponent.value?.showPopup();
         });
       }
+      isSearchingDatabase.value = false;
     }
   );
 }
@@ -370,6 +375,7 @@ onMounted(() => {
           @filter="filterByTitle"
           label="Search for a database to upload to"
           @update:model-value="handlePDSelection"
+          :loading="isSearchingDatabase"
         >
           <template v-slot:prepend>
             <q-icon :name="mdiDatabaseSearchOutline" />
