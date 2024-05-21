@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, status, Body, Request
+from fastapi import FastAPI, status, Body, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -69,13 +69,13 @@ async def page_database_endpoint(request: Request):
 
 # 如果使用 GET 请求，access token 就要放在 url 中，不够安全，因此使用 POST
 @app.post("/exchange-code-for-token", response_model=ApiResponse)
-async def exchange_code_for_token_endpoint(code: str = Body(..., embed=True)):
+async def exchange_code_for_token_endpoint(
+    code: str = Body(..., embed=True), background_tasks: BackgroundTasks = None
+):
     token_result = await exchange_code_for_token(code=code)
     if isinstance(token_result, ErrorResult):
         return ApiResponse(success=False, code=token_result.code, message=token_result.message)
-    get_user_info(user_id=token_result.owner.user.id, access_token=token_result.access_token)
+    background_tasks.add_task(
+        get_user_info, user_id=token_result.owner.user.id, access_token=token_result.access_token
+    )
     return ApiResponse(data=token_result, success=True)
-
-
-if __name__ == "__main__":
-    app.run(debug=not Config.IS_PRODUCTION)
