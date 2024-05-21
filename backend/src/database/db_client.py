@@ -4,10 +4,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import sessionmaker
 
+from src.config import Config
 from src.database.db_models import AccessToken, User, Base
 from src.models import NAccessToken, NUser
 
-engine = create_engine(f"sqlite:///{Path(__file__).resolve().parent}/database.db")
+if Config.IS_PRODUCTION:
+    engine = create_engine(Config.POSTGRES_URL)
+else:
+    engine = create_engine(f"sqlite:///{Path(__file__).resolve().parent}/database.db")
 # 使用 with Session.begin()，会自动在 with 内部代码到结尾时自动提交事务，出错时也会自动 rollback
 Session = sessionmaker(engine)
 Base.metadata.create_all(engine, checkfirst=True)

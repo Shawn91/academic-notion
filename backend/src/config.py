@@ -12,3 +12,4 @@ class Config:
     NOTION_CLIENT_ID = os.environ["NOTION_CLIENT_ID"]
     NOTION_SECRET = os.environ["NOTION_SECRET"]
     NOTION_TEST_DATABASE = os.environ.get("NOTION_TEST_DATABASE")
+    POSTGRES_URL = os.environ.get("POSTGRES_URL")
