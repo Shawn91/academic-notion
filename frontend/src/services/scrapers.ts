@@ -180,7 +180,7 @@ export class ArxivScraper extends Scraper {
       let authors;
       if (authorEles.length > 0) {
         authors = Array.from(authorEles).map((authorEle) => {
-          return { fullName: authorEle.textContent };
+          return { fullName: authorEle.textContent?.trim() };
         });
       }
 
