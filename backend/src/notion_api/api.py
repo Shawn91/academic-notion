@@ -79,13 +79,13 @@ async def search_by_title(
 async def upload_works(work_to_database_properties: list[dict], access_token: str) -> list[NPDInfo | ErrorResult]:
     """work_to_database_properties 是已经整理好格式的上传内容，直接将元素传递给 notion.pages.create 即可"""
     results = []
-    for properties in work_to_database_properties:
+    for idx, properties in enumerate(work_to_database_properties):
         try:
             results.append(await notion.pages.create(**properties, auth=access_token))
         except APIResponseError as error:
             results.append(
                 ErrorResult(
-                    message=json.loads(error.body).get("message", "Notion API error"), code=error.code, data=properties
+                    message=json.loads(error.body).get("message", "Notion API error"), code=error.code, data=idx
                 )
             )
     return results

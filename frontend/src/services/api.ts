@@ -38,14 +38,18 @@ export async function uploadWorks(
   works: Work[],
   databaseToWorkMapping: PDToWorkMapping,
   accessToken: string
-): Promise<Response<Work[]>> {
+): Promise<Work[]> {
   const uploadData = works.map((work) => {
     return {
       parent: { type: 'database_id', database_id: pageDatabase.id },
       properties: transformFromWorkToPDItem(databaseToWorkMapping, work),
     };
   });
-  return (await api.url('/upload-works').post({ access_token: accessToken, data: uploadData })) as Response<Work[]>;
+  const res = (await api.url('/upload-works').post({ access_token: accessToken, data: uploadData })) as Response<
+    number[]
+  >;
+  // res.data 是上传出错的文献在 works 变量中的下标
+  return res.data.map((i) => works[i]);
 }
 
 /**

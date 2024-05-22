@@ -116,7 +116,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           accessTokenWithWorkspace?.access_token as string
         )
           .then((res) => {
-            sendResponse(res.data);
+            sendResponse(res);
           })
           .catch(() => {
             sendResponse(request.data['works']);

@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 async function uploadWorks(): Promise<Work[]> {
   return new Promise((resolve, reject) => {
     if (!selectedPDId.value) {
-      reject({ message: 'Please select a database', data: works });
+      reject({ message: 'Please select a database', data: works.value });
       return;
     }
 
@@ -56,7 +56,7 @@ async function uploadWorks(): Promise<Work[]> {
       },
       (response) => {
         if (chrome.runtime.lastError) {
-          reject(works);
+          reject(works.value);
         } else {
           resolve(response);
         }
