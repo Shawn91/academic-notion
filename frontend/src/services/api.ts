@@ -3,7 +3,7 @@ import QueryStringAddon from 'wretch/addons/queryString';
 import { NAccessTokenWithWorkspace, NPDInfo, PDToWorkMapping, Work } from 'src/models/models';
 import { transformFromWorkToPDItem } from 'src/services/database-work-mapping';
 
-const baseURL = process.env.DEV ? 'http://localhost:8000' : '';
+const baseURL = process.env.DEV ? 'http://localhost:8000' : 'https://academic-notion-backend-q5zb8.ondigitalocean.app';
 
 export const api = wretch(baseURL, { mode: 'cors' })
   .addon(QueryStringAddon)
