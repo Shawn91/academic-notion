@@ -1,9 +1,9 @@
 {
   "name": "academic-notion",
-  "version": "0.0.1",
-  "description": "A Quasar Project",
+  "version": "0.1.0",
+  "description": "Make Notion an alternative to Zotero",
   "productName": "Academic Notion",
-  "author": "Shawn <vuyuxl199199@gmail.com>",
+  "author": "Shawn <support@texcel.app>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue ./",
