@@ -8,11 +8,7 @@
   "permissions": [
     "storage",
     "tabs",
-    "activeTab",
     "identity"
-  ],
-  "host_permissions": [
-    "*://*/*"
   ],
   "action": {
   },

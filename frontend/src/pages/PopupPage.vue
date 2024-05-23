@@ -196,7 +196,8 @@ onBeforeMount(async () => {
         />
       </div>
     </div>
-    <div class="footer-button-group flex justify-end q-mt-sm">
+    <div class="footer-button-group flex justify-between q-mt-sm">
+      <p class="text-caption">Feel free to contact me at support@texcel.app</p>
       <q-btn
         color="secondary"
         class="q-ml-md"
@@ -218,15 +219,18 @@ onBeforeMount(async () => {
         @updatePDInfo="updatePDInfo"
       ></search-page-database>
     </div>
-    <div class="footer-button-group flex justify-end q-mt-sm">
-      <q-btn
-        color="primary"
-        label="Upload"
-        :disable="selectedWorks.length === 0"
-        @click="handleUploadWorkButtonClicked"
-        :loading="isUploadingWorks"
-      />
-      <q-btn color="secondary" class="q-ml-md" label="Back" @click="pageNum = 'page-1'" />
+    <div class="footer-button-group flex justify-between q-mt-sm">
+      <p class="text-caption">Feel free to contact me at support@texcel.app</p>
+      <div>
+        <q-btn
+          color="primary"
+          label="Upload"
+          :disable="selectedWorks.length === 0"
+          @click="handleUploadWorkButtonClicked"
+          :loading="isUploadingWorks"
+        />
+        <q-btn color="secondary" class="q-ml-md" label="Back" @click="pageNum = 'page-1'" />
+      </div>
     </div>
 
     <q-dialog v-model="showPDInfoOutdatedDialog" persistent>
