@@ -1,7 +1,7 @@
 {
   "name": "academic-notion",
   "version": "0.1.0",
-  "description": "Make Notion an alternative to Zotero",
+  "description": "Make Notion a better alternative to Zotero",
   "productName": "Academic Notion",
   "author": "Shawn <support@texcel.app>",
   "private": true,
